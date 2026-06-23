@@ -16,26 +16,31 @@ import streamlit as st
 st.set_page_config(layout="wide")
 st.title("Streamlit 4 Boxes Layout")
 
-# Custom CSS to give the boxes a border, padding, and background color
-st.html("<style>.custom-box { background-color: #f0f2f6; padding: 30px; border-radius: 10px; border: 2px solid #4cbd93; text-align: center; margin-bottom: 20px; min-height: 150px; }</style>")
-
 # Row 1
 row1_col1, row1_col2 = st.columns(2)
 
 with row1_col1:
-    st.markdown('<div class="custom-box"><h3>Box 1</h3><p>Top Left Content</p></div>', unsafe_html=True)
+    with st.container(border=True):
+        st.subheader("Box 1")
+        st.write("Top Left Content")
 
 with row1_col2:
-    st.markdown('<div class="custom-box"><h3>Box 2</h3><p>Top Right Content</p></div>', unsafe_html=True)
+    with st.container(border=True):
+        st.subheader("Box 2")
+        st.write("Top Right Content")
 
 # Row 2
 row2_col1, row2_col2 = st.columns(2)
 
 with row2_col1:
-    st.markdown('<div class="custom-box"><h3>Box 3</h3><p>Bottom Left Content</p></div>', unsafe_html=True)
+    with st.container(border=True):
+        st.subheader("Box 3")
+        st.write("Bottom Left Content")
 
 with row2_col2:
-    st.markdown('<div class="custom-box"><h3>Box 4</h3><p>Bottom Right Content</p></div>', unsafe_html=True)
+    with st.container(border=True):
+        st.subheader("Box 4")
+        st.write("Bottom Right Content")
 # ----------------------------------------------------------------------
 # Session State Initialization
 # ----------------------------------------------------------------------
