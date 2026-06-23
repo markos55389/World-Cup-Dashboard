@@ -19,12 +19,16 @@ if "teams_df" not in st.session_state:
     initial_data = [
         {"name": "Brazil", "flag": "🇧🇷", "group": "A", "played": 3, "won": 2, "drawn": 1, "lost": 0, "gf": 8, "ga": 3},
         {"name": "France", "flag": "🇫🇷", "group": "B", "played": 3, "won": 2, "drawn": 0, "lost": 1, "gf": 7, "ga": 4},
-        {"name": "Argentina", "flag": "🇦🇷", "group": "C", "played": 3, "won": 3, "drawn": 0, "lost": 0, "gf": 9, "ga": 2},
-        {"name": "England", "flag": "🏴󠁧󠁢󠁥󠁮󠁧󠁿", "group": "D", "played": 3, "won": 2, "drawn": 1, "lost": 0, "gf": 6, "ga": 2},
+        {"name": "Argentina", "flag": "🇦🇷", "group": "C", "played": 3, "won": 3, "drawn": 0, "lost": 0, "gf": 9,
+         "ga": 2},
+        {"name": "England", "flag": "🏴󠁧󠁢󠁥󠁮󠁧󠁿", "group": "D", "played": 3, "won": 2, "drawn": 1, "lost": 0, "gf": 6,
+         "ga": 2},
         {"name": "Spain", "flag": "🇪🇸", "group": "E", "played": 3, "won": 1, "drawn": 2, "lost": 0, "gf": 5, "ga": 3},
         {"name": "Germany", "flag": "🇩🇪", "group": "A", "played": 3, "won": 1, "drawn": 1, "lost": 1, "gf": 5, "ga": 4},
-        {"name": "Portugal", "flag": "🇵🇹", "group": "B", "played": 3, "won": 2, "drawn": 0, "lost": 1, "gf": 6, "ga": 3},
-        {"name": "Netherlands", "flag": "🇳🇱", "group": "C", "played": 3, "won": 1, "drawn": 1, "lost": 1, "gf": 4, "ga": 4},
+        {"name": "Portugal", "flag": "🇵🇹", "group": "B", "played": 3, "won": 2, "drawn": 0, "lost": 1, "gf": 6,
+         "ga": 3},
+        {"name": "Netherlands", "flag": "🇳🇱", "group": "C", "played": 3, "won": 1, "drawn": 1, "lost": 1, "gf": 4,
+         "ga": 4},
     ]
     df_init = pd.DataFrame(initial_data)
     df_init["gd"] = df_init["gf"] - df_init["ga"]
@@ -144,16 +148,34 @@ elif st.session_state.current_page == "stats":
                     group_letter = group.get("name", "")
                     for team in group.get("teams", []):
                         if isinstance(team, dict):
-                            # Correct layout mappings for worldcup26.ir data structures
-                            team_name = team.get("name_en") or team.get("name") or team.get("name_fa")
 
+                            # Safely handle if team metadata is nested inside a separate 'team' dict object
+                            team_info = team.get("team", {}) if isinstance(team.get("team"), dict) else team
+
+                            team_name = (
+                                    team_info.get("name_en") or
+                                    team_info.get("name") or
+                                    team.get("team_name") or
+                                    team_info.get("name_fa")
+                            )
+
+                            team_flag = (
+                                    team_info.get("flag") or
+                                    team_info.get("emoji") or
+                                    team_info.get("emoji_flag") or
+                                    team.get("flag")
+                            )
+
+                            # Handle ultimate fallbacks if data blocks are missing string parameters
                             if not team_name:
-                                team_name = f"Team ID: {team.get('team_id') or team.get('id') or 'Unknown'}"
+                                team_id_val = team_info.get("id") or team_info.get("team_id") or team.get(
+                                    "id") or "Unknown"
+                                team_name = f"Team ID: {team_id_val}"
                             else:
                                 team_name = str(team_name).strip()
 
-                            # Use payload dynamic flag elements or fall back on mapping index dictionary
-                            team_flag = team.get("flag") or team.get("emoji") or FLAG_MAP.get(team_name, "⚽")
+                            if not team_flag:
+                                team_flag = FLAG_MAP.get(team_name, "⚽")
 
                             all_teams.append({
                                 "name": team_name,
