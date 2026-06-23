@@ -149,8 +149,15 @@ elif st.session_state.current_page == "stats":
                     for team in group.get("teams", []):
                         if isinstance(team, dict):
                             # Adaptive name resolver step
-                            team_name = team.get("name_en") or team.get(
-                                "name") or f"Team ID: {team.get('team_id', 'Unknown')}"
+                            # Updated Adaptive name resolver step
+                            # Checking both English naming fields commonly provided by this specific API
+                            team_name = team.get("name_en") or team.get("name") or team.get("name_fa")
+
+                            # If all name fields are blank or None, fallback safely to ID format
+                            if not team_name:
+                                team_name = f"Team ID: {team.get('team_id') or team.get('id') or 'Unknown'}"
+                            else:
+                                team_name = str(team_name).strip()
 
                             # Match flag dynamically based on dictionary, default to football if missing
                             team_flag = FLAG_MAP.get(team_name, "⚽")
