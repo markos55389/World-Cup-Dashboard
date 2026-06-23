@@ -14,33 +14,77 @@ st.set_page_config(
 import streamlit as st
 
 st.set_page_config(layout="wide")
-st.title("Streamlit 4 Boxes Layout")
 
-# Row 1
-row1_col1, row1_col2 = st.columns(2)
+# 1. Initialize the navigation state if it doesn't exist yet
+if "current_page" not in st.session_state:
+    st.session_state.current_page = "home"
 
-with row1_col1:
-    with st.container(border=True):
-        st.subheader("Box 1")
-        st.write("Top Left Content")
+# --- PAGE 1: HOME (THE 4 BOXES) ---
+if st.session_state.current_page == "home":
+    st.title("Streamlit 4 Boxes Layout")
 
-with row1_col2:
-    with st.container(border=True):
-        st.subheader("Box 2")
-        st.write("Top Right Content")
+    # Row 1
+    row1_col1, row1_col2 = st.columns(2)
 
-# Row 2
-row2_col1, row2_col2 = st.columns(2)
+    with row1_col1:
+        with st.container(border=True):
+            st.subheader("Box 1")
+            st.write("Top Left Content")
 
-with row2_col1:
-    with st.container(border=True):
-        st.subheader("Box 3")
-        st.write("Bottom Left Content")
+    with row1_col2:
+        with st.container(border=True):
+            st.subheader("Team Stats")
+            st.write("Click below to view the detailed statistics!")
 
-with row2_col2:
-    with st.container(border=True):
-        st.subheader("Box 4")
-        st.write("Bottom Right Content")
+            # Clicking this button changes the state to load the second view
+            if st.button("Go to World Cup Stats ➔", type="primary"):
+                st.session_state.current_page = "stats"
+                st.rerun()
+
+    # Row 2
+    row2_col1, row2_col2 = st.columns(2)
+
+    with row2_col1:
+        with st.container(border=True):
+            st.subheader("Box 3")
+            st.write("Bottom Left Content")
+
+    with row2_col2:
+        with st.container(border=True):
+            st.subheader("Box 4")
+            st.write("Bottom Right Content")
+
+# --- PAGE 2: DIFFERENT PART OF THE PROGRAM ---
+elif st.session_state.current_page == "stats":
+    st.subheader("Group Stage Standings")
+
+    # Prepare standings table
+    standings = df.sort_values(
+        by=["points", "gd", "gf"],
+        ascending=[False, False, False]
+    ).reset_index(drop=True)
+    standings.insert(0, "Pos", range(1, len(standings) + 1))
+
+    # Display as nice dataframe
+    st.dataframe(
+        standings[["Pos", "flag", "name", "group", "played", "won", "drawn", "lost", "gf", "ga", "gd", "points"]],
+        column_config={
+            "Pos": st.column_config.NumberColumn("Pos", width="small"),
+            "flag": st.column_config.TextColumn(""),
+            "name": st.column_config.TextColumn("Team", width="medium"),
+            "group": st.column_config.TextColumn("Group", width="small"),
+            "gd": st.column_config.NumberColumn("GD", help="Goal Difference"),
+            "points": st.column_config.NumberColumn("Pts", help="Points"),
+        },
+        hide_index=True,
+        use_container_width=True,
+        height=500
+    )
+
+    # A button to head back to the home layout
+    if st.button("⬅ Back to Home"):
+        st.session_state.current_page = "home"
+        st.rerun()
 # ----------------------------------------------------------------------
 # Session State Initialization
 # ----------------------------------------------------------------------
