@@ -4,7 +4,6 @@ import random
 
 # Load your World Cup data at the very top of the script
 world_cup_data = {
-    "Pos": [1, 2, 3, 4, 5, 6],
     "flag": ["🇦🇷", "🇫🇷", "🇭🇷", "🇲🇦", "🇧🇷", "🇳🇱"],
     "name": ["Argentina", "France", "Croatia", "Morocco", "Brazil", "Netherlands"],
     "group": ["C", "D", "F", "F", "G", "A"],
