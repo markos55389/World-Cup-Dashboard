@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import random
 
+
 # Load your World Cup data at the very top of the script
 world_cup_data = {
     "flag": ["🇦🇷", "🇫🇷", "🇭🇷", "🇲🇦", "🇧🇷", "🇳🇱"],
@@ -188,6 +189,26 @@ elif st.session_state.current_page == "news":
     st.subheader("📰Latest News")
     st.write("Find the latest news about your team")
 
+    # 1. Create the text input box
+    search_query = st.text_input(
+        "🔍 Search Team News",
+        placeholder="Type team name (e.g., Argentina)...",
+        key="team_news_search_input_no_urllib"
+    )
+
+    if search_query.strip():
+        # 2. Clean the input and swap spaces out for '+' signs so Google's URL can read it safely
+        clean_team_name = search_query.strip().replace(" ", "+")
+
+        # 3. Construct the Google search link directly
+        google_url = f"https://www.google.com/search?q={clean_team_name}+latest+football+news"
+
+        # 4. Display the direct link button
+        st.link_button(
+            label=f"Read latest news for {search_query.strip()} ➔",
+            url=google_url,
+            type="primary"
+        )
 
     # 💡 Back to Home button with its own unique key and correct indentation
     if st.button("⬅ Back to Home", key="back_home_from_news"):
