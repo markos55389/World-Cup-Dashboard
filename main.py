@@ -6,7 +6,7 @@ import random
 @st.cache_data  # This stops Streamlit from re-loading the file every time you click a button
 def load_data():
     # Make sure 'world_cup_data.csv' is saved in your GitHub repo folder next to main.py
-    return pd.read_csv("world_cup_data.csv")
+    return pd.read_csv("/Users/markos/panda_tutorial/world_cup_data.csv")
 
 # Initialize df so it's accessible everywhere in your app
 df = load_data()
