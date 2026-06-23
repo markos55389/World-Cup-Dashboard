@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import random
+import requests
 
 
 # Load your World Cup data at the very top of the script
@@ -86,32 +87,79 @@ if st.session_state.current_page == "home":
 
 # --- PAGE 2: DIFFERENT PART OF THE PROGRAM ---
 elif st.session_state.current_page == "stats":
-    st.subheader("Group Stage Standings")
+    st.subheader("🏆 Live Tournament Group Standings")
 
-    # Prepare standings table
-    standings = df.sort_values(
-        by=["points", "gd", "gf"],
-        ascending=[False, False, False]
-    ).reset_index(drop=True)
-    standings.insert(0, "Pos", range(1, len(standings) + 1))
+    # 1. Fetch data directly from worldcup26.ir public endpoints
+    api_url = "https://worldcup26.ir/get/groups"
 
-    # Display as nice dataframe
-    st.dataframe(
-        standings[["Pos", "flag", "name", "group", "played", "won", "drawn", "lost", "gf", "ga", "gd", "points"]],
-        column_config={
-            "Pos": st.column_config.NumberColumn("Pos", width="small"),
-            "flag": st.column_config.TextColumn(""),
-            "name": st.column_config.TextColumn("Team", width="medium"),
-            "group": st.column_config.TextColumn("Group", width="small"),
-            "gd": st.column_config.NumberColumn("GD", help="Goal Difference"),
-            "points": st.column_config.NumberColumn("Pts", help="Points"),
-        },
-        hide_index=True,
-        use_container_width=True,
-        height=500
-    )
+    try:
+        response = requests.get(api_url, timeout=8)
 
-    # A button to head back to the home layout
+        if response.status_code == 200:
+            groups_data = response.json()  # This returns a list of groups (A through L)
+
+            # 2. Extract and flatten the nested team details from each group
+            all_teams = []
+            for group in groups_data:
+                group_letter = group.get("name", "")  # e.g., "A"
+                # Loop through the list of teams sitting inside this group block
+                for team in group.get("teams", []):
+                    all_teams.append({
+                        "name": team.get("name_en", team.get("name", "")),  # Fallback English name
+                        "group": group_letter,
+                        "played": team.get("played", 0),
+                        "won": team.get("won", 0),
+                        "drawn": team.get("drawn", 0),
+                        "lost": team.get("lost", 0),
+                        "gf": team.get("goals_for", 0),
+                        "ga": team.get("goals_against", 0),
+                        "gd": team.get("goal_difference", 0),
+                        "points": team.get("points", 0),
+                        "flag": "⚽"  # Default placeholder emoji
+                    })
+
+            live_df = pd.DataFrame(all_teams)
+
+            if not live_df.empty:
+                # 3. Sort standard league format rules: Points -> GD -> Goals For
+                live_df = live_df.sort_values(
+                    by=["points", "gd", "gf"],
+                    ascending=[False, False, False]
+                ).reset_index(drop=True)
+
+                # Dynamic positional rank
+                live_df.insert(0, "Pos", range(1, len(live_df) + 1))
+
+                # Display the clean API-driven dataframe
+                st.dataframe(
+                    live_df[
+                        ["Pos", "flag", "name", "group", "played", "won", "drawn", "lost", "gf", "ga", "gd", "points"]],
+                    column_config={
+                        "Pos": st.column_config.NumberColumn("Pos", width="small"),
+                        "flag": st.column_config.TextColumn(""),
+                        "name": st.column_config.TextColumn("Team", width="medium"),
+                        "group": st.column_config.TextColumn("Group", width="small"),
+                        "gd": st.column_config.NumberColumn("GD", help="Goal Difference"),
+                        "points": st.column_config.NumberColumn("Pts", help="Points"),
+                    },
+                    hide_index=True,
+                    use_container_width=True,
+                    height=500
+                )
+            else:
+                st.warning("API returned an empty dataset. Using fallback local cache.")
+                st.dataframe(df)
+
+        else:
+            st.error(f"Server responded with error status: {response.status_code}. Loading baseline data.")
+            st.dataframe(df)
+
+    except Exception as e:
+        # Graceful fallback so your dashboard never crashes if the host goes down
+        st.warning("Could not establish server connection. Running offline dashboard view.")
+        st.dataframe(df)
+
+    # Navigation Button
     if st.button("🔍 Team Explorer", key="go_to_explorer_from_stats"):
         st.session_state.current_page = "🔍Explorer"
         st.rerun()
