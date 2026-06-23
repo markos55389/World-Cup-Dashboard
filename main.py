@@ -44,7 +44,7 @@ if st.session_state.current_page == "home":
 
     with row1_col1:
         with st.container(border=True):
-            st.subheader("Box 1")
+            st.subheader("Player Stats")
             st.write("View individual player performances and top scorers!")
 
             # 💡 New button to route to player stats page
@@ -55,7 +55,7 @@ if st.session_state.current_page == "home":
     with row1_col2:
         with st.container(border=True):
             st.subheader("Team Stats")
-            st.write("Click below to view the detailed statistics!")
+            st.write("Click below to view the detailed statistics of all the teams!")
 
             # Clicking this button changes the state to load the second view
             if st.button("Go to World Cup Stats ➔", type="primary"):
