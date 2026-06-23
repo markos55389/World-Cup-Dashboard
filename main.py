@@ -102,12 +102,12 @@ elif st.session_state.current_page == "stats":
         st.session_state.current_page = "home"
         st.rerun()
 
-    if st.button("Team Explorer"):
-        st.session_state.current_page = "Explorer"
+    if st.button("🔍Team Explorer"):
+        st.session_state.current_page = "🔍Explorer"
         st.rerun()
 
 # --- PAGE 3: DIFFERENT PART OF THE PROGRAM ---
-elif st.session_state.current_page == "Explorer":
+elif st.session_state.current_page == "🔍Explorer":
          st.subheader("Team Deep Dive")
 
          if not df.empty:
@@ -142,7 +142,13 @@ elif st.session_state.current_page == "Explorer":
              st.bar_chart(chart_data.set_index("Category"), use_container_width=True)
          else:
              st.warning("No teams match your filters.")
+if st.button("⬅ Back to Home", key="back_from_page_3"):
+        st.session_state.current_page = "home"
+        st.rerun()
 
+if st.button("🏆 Standings", key="back_from_page_3"):
+        st.session_state.current_page = "stats"
+        st.rerun()
 # ----------------------------------------------------------------------
 # Session State Initialization
 # ----------------------------------------------------------------------
