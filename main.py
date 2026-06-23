@@ -67,13 +67,21 @@ if st.session_state.current_page == "home":
 
     with row2_col1:
         with st.container(border=True):
-            st.subheader("Box 3")
-            st.write("Bottom Left Content")
+            st.subheader("News")
+            st.write("Get the latest news about your favourite teams!")
+
+            if st.button("Go to the latest news ➔", type="primary"):
+                st.session_state.current_page = "news"
+                st.rerun()
 
     with row2_col2:
         with st.container(border=True):
-            st.subheader("Box 4")
-            st.write("Bottom Right Content")
+            st.subheader("Competition")
+            st.write("Find out where we are currently in the competition!")
+
+            if st.button("Find out where we are ➔", type="primary"):
+                st.session_state.current_page = "stats"
+                st.rerun()
 
 # --- PAGE 2: DIFFERENT PART OF THE PROGRAM ---
 elif st.session_state.current_page == "stats":
@@ -172,6 +180,28 @@ elif st.session_state.current_page == "player_stats":
 
     # 💡 Back to Home button with its own unique key and correct indentation
     if st.button("⬅ Back to Home", key="back_home_from_players"):
+        st.session_state.current_page = "home"
+        st.rerun()
+
+# --- PAGE 5: News ---
+elif st.session_state.current_page == "news":
+    st.subheader("Latest News")
+    st.write("Find the latest news about your team")
+
+
+    # 💡 Back to Home button with its own unique key and correct indentation
+    if st.button("⬅ Back to Home", key="back_home_from_news"):
+        st.session_state.current_page = "home"
+        st.rerun()
+
+# --- PAGE 6: PLAYER STATS ---
+elif st.session_state.current_page == "competition":
+    st.subheader("⚽ Competition Whereabouts")
+    st.write("Find out where we are in the competition")
+
+
+    # 💡 Back to Home button with its own unique key and correct indentation
+    if st.button("⬅ Back to Home", key="back_home_from_competition"):
         st.session_state.current_page = "home"
         st.rerun()
 # ----------------------------------------------------------------------
