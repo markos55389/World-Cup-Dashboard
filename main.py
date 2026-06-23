@@ -99,6 +99,7 @@ if st.session_state.current_page == "home":
                 st.rerun()
 
 # --- PAGE 2: TEAM STATS & STANDINGS ---
+# --- PAGE 2: TEAM STATS & STANDINGS ---
 elif st.session_state.current_page == "stats":
     st.title("🏆 FIFA World Cup 2026 Standings")
 
@@ -145,28 +146,27 @@ elif st.session_state.current_page == "stats":
             all_teams = []
             for group in raw_groups_list:
                 if isinstance(group, dict):
-                    group_letter = group.get("name", "")
+                    group_letter = group.get("group") or group.get("name", "")
                     for team in group.get("teams", []):
                         if isinstance(team, dict):
                             # Adaptive name resolver step
-                            team_name = team.get("name_en") or team.get(
-                                "name") or f"Team ID: {team.get('team_id', 'Unknown')}"
+                            team_name = team.get("name_en") or team.get("name") or f"Team ID: {team.get('team_id', 'Unknown')}"
 
                             # Match flag dynamically based on dictionary, default to football if missing
                             team_flag = FLAG_MAP.get(team_name, "⚽")
 
-                            # --- UPDATED API KEYS MAPPING ---
+                            # --- EXACT API SCHEMA DICTIONARY CORRECTION ---
                             all_teams.append({
                                 "name": team_name,
                                 "group": group_letter,
-                                "played": int(team.get("games_played", team.get("played", 0))),
-                                "won": int(team.get("wins", team.get("won", 0))),
-                                "drawn": int(team.get("draws", team.get("drawn", 0))),
-                                "lost": int(team.get("losses", team.get("lost", 0))),
-                                "gf": int(team.get("goals_for", team.get("gf", 0))),
-                                "ga": int(team.get("goals_against", team.get("ga", 0))),
-                                "gd": int(team.get("goal_difference", team.get("gd", 0))),
-                                "points": int(team.get("points", 0)),
+                                "played": int(team.get("mp", team.get("played", 0))),
+                                "won": int(team.get("w", team.get("won", 0))),
+                                "drawn": int(team.get("d", team.get("drawn", 0))),
+                                "lost": int(team.get("l", team.get("lost", 0))),
+                                "gf": int(team.get("gf", 0)),
+                                "ga": int(team.get("ga", 0)),
+                                "gd": int(team.get("gd", team.get("goal_difference", 0))),
+                                "points": int(team.get("pts", team.get("points", 0))),
                                 "flag": team_flag
                             })
             if all_teams:
