@@ -6,7 +6,7 @@ import requests
 # ----------------------------------------------------------------------
 # 1. Page Configuration (MUST be first call, only once)
 # ----------------------------------------------------------------------
-st.set_set_page_config(
+st.set_page_config(
     page_title="FIFA World Cup 2026",
     page_icon="⚽",
     layout="wide"
