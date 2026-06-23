@@ -6,12 +6,12 @@ import random
 world_cup_data = {
     "Country": ["Argentina", "France", "Croatia", "Morocco", "Brazil", "Netherlands"],
     "Group": ["C", "D", "F", "F", "G", "A"],
-    "Points": [9, 9, 5, 7, 6, 7],
-    "Goals For": [15, 16, 8, 6, 8, 10],
+    "points": [9, 9, 5, 7, 6, 7],         # Lowercase 'p'
+    "gf": [15, 16, 8, 6, 8, 10],          # Goals For shortened to 'gf'
+    "gd": [8, 9, 3, 2, 4, 5],             # Added Goal Difference 'gd'
     "Wins": [4, 4, 2, 3, 2, 2]
 }
 
-# 2. Convert it to a DataFrame (df) right away
 df = pd.DataFrame(world_cup_data)
 # ----------------------------------------------------------------------
 # Page Configuration
