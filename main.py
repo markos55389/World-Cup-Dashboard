@@ -102,11 +102,10 @@ if st.session_state.current_page == "home":
 elif st.session_state.current_page == "stats":
     st.title("🏆 FIFA World Cup 2026 Standings")
 
-    # Baseline fallback data definition
     display_df = st.session_state.teams_df.copy()
     is_live = False
 
-    # Comprehensive Flag Mapping Dictionary for World Cup Teams
+    # Universal Flag Mapping Directory fallback
     FLAG_MAP = {
         "Argentina": "🇦🇷", "Australia": "🇦🇺", "Austria": "🇦🇹", "Belgium": "🇧🇪",
         "Brazil": "🇧🇷", "Cameroon": "🇨🇲", "Canada": "🇨🇦", "Chile": "🇨🇱",
@@ -120,84 +119,79 @@ elif st.session_state.current_page == "stats":
         "USA": "🇺🇸", "United States": "🇺🇸", "Uruguay": "🇺🇾", "Wales": "🏴󠁧󠁢󠁷󠁬󠁳󠁿"
     }
 
-    # Live API Connector Attempt
-    api_url = "https://worldcup26.ir/get/groups"
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     }
 
     try:
-        response = requests.get(api_url, headers=headers, timeout=6)
-        if response.status_code == 200:
-            groups_data = response.json()
+        # STEP 1: Fetch global team identities (names and flags are stored here)
+        teams_response = requests.get("https://worldcup26.ir/get/teams", headers=headers, timeout=6)
+        # STEP 2: Fetch raw group metric frames
+        groups_response = requests.get("https://worldcup26.ir/get/groups", headers=headers, timeout=6)
 
-            raw_groups_list = []
-            if isinstance(groups_data, list):
-                raw_groups_list = groups_data
-            elif isinstance(groups_data, dict):
-                if "data" in groups_data and isinstance(groups_data["data"], list):
-                    raw_groups_list = groups_data["data"]
-                elif "groups" in groups_data and isinstance(groups_data["groups"], list):
-                    raw_groups_list = groups_data["groups"]
-                else:
-                    raw_groups_list = [v for v in groups_data.values() if isinstance(v, dict)]
+        if teams_response.status_code == 200 and groups_response.status_code == 200:
+            # Parse identity index maps
+            teams_data = teams_response.json()
+            teams_list = teams_data.get("data", teams_data) if isinstance(teams_data, dict) else teams_data
+
+            team_meta_map = {}
+            for t in teams_list:
+                if isinstance(t, dict):
+                    tid = str(t.get("id") or t.get("team_id"))
+                    team_meta_map[tid] = {
+                        "name": t.get("name_en") or t.get("name") or "Unknown Team",
+                        "flag": t.get("flag") or t.get("emoji") or FLAG_MAP.get(t.get("name_en"), "⚽")
+                    }
+
+            # Parse structural group dynamic arrays
+            groups_data = groups_response.json()
+            raw_groups_list = groups_data.get("data", groups_data) if isinstance(groups_data, dict) else groups_data
 
             all_teams = []
             for group in raw_groups_list:
                 if isinstance(group, dict):
-                    group_letter = group.get("name", "")
+                    group_letter = group.get("group") or group.get("name") or ""
                     for team in group.get("teams", []):
                         if isinstance(team, dict):
+                            tid = str(team.get("team_id") or team.get("id"))
 
-                            # Safely handle if team metadata is nested inside a separate 'team' dict object
-                            team_info = team.get("team", {}) if isinstance(team.get("team"), dict) else team
+                            # Fetch string properties from compiled directory map
+                            meta = team_meta_map.get(tid, {"name": f"Team ID: {tid}", "flag": "⚽"})
 
-                            team_name = (
-                                    team_info.get("name_en") or
-                                    team_info.get("name") or
-                                    team.get("team_name") or
-                                    team_info.get("name_fa")
-                            )
+                            # Parse core math properties from string payloads
+                            gf = int(team.get("gf", 0))
+                            ga = int(team.get("ga", 0))
+                            points = int(team.get("pts") or team.get("points") or 0)
 
-                            team_flag = (
-                                    team_info.get("flag") or
-                                    team_info.get("emoji") or
-                                    team_info.get("emoji_flag") or
-                                    team.get("flag")
-                            )
-
-                            # Handle ultimate fallbacks if data blocks are missing string parameters
-                            if not team_name:
-                                team_id_val = team_info.get("id") or team_info.get("team_id") or team.get(
-                                    "id") or "Unknown"
-                                team_name = f"Team ID: {team_id_val}"
-                            else:
-                                team_name = str(team_name).strip()
-
-                            if not team_flag:
-                                team_flag = FLAG_MAP.get(team_name, "⚽")
+                            # Reconstruct missing game outcomes dynamically via back-math logic
+                            # Every Win provides 3 points, Draw provides 1 point.
+                            # We approximate match sets safely.
+                            won = points // 3
+                            drawn = points % 3
+                            played = int(team.get("played") or (won + drawn))
+                            lost = max(0, played - (won + drawn))
 
                             all_teams.append({
-                                "name": team_name,
+                                "name": meta["name"],
                                 "group": group_letter,
-                                "played": int(team.get("played", 0)),
-                                "won": int(team.get("won", 0)),
-                                "drawn": int(team.get("drawn", 0)),
-                                "lost": int(team.get("lost", 0)),
-                                "gf": int(team.get("goals_for", team.get("gf", 0))),
-                                "ga": int(team.get("goals_against", team.get("ga", 0))),
-                                "gd": int(team.get("goal_difference", team.get("gd", 0))),
-                                "points": int(team.get("points", 0)),
-                                "flag": team_flag
+                                "played": played,
+                                "won": won,
+                                "drawn": drawn,
+                                "lost": lost,
+                                "gf": gf,
+                                "ga": ga,
+                                "gd": gf - ga,
+                                "points": points,
+                                "flag": meta["flag"]
                             })
             if all_teams:
                 display_df = pd.DataFrame(all_teams)
                 is_live = True
         else:
-            st.error(f"⚠️ API responded with bad HTTP code: {response.status_code}")
+            st.error("⚠️ Local API connection rejected requests.")
     except Exception as api_error:
-        st.error("⚠️ The live API connection failed to load successfully.")
-        st.info(f"Detailed Troubleshooting Context: {api_error}")
+        st.error("⚠️ Live API components failed to map correctly.")
+        st.info(f"Troubleshooting Payload details: {api_error}")
 
     # Top KPI Cards
     kpi1, kpi2, kpi3, kpi4 = st.columns(4)
@@ -212,7 +206,7 @@ elif st.session_state.current_page == "stats":
     else:
         st.subheader("📋 Group Stage Standings Table (Offline Backup)")
 
-    # Sort standard format ranking criteria
+    # Sort rankings safely
     standings = display_df.sort_values(by=["points", "gd", "gf"], ascending=[False, False, False]).reset_index(
         drop=True)
     standings.insert(0, "Pos", range(1, len(standings) + 1))
