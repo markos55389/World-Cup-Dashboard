@@ -104,46 +104,49 @@ elif st.session_state.current_page == "stats":
 
 # --- PAGE 3: DIFFERENT PART OF THE PROGRAM ---
 elif st.session_state.current_page == "🔍Explorer":
-         st.subheader("Team Deep Dive")
+    st.subheader("Team Deep Dive")
 
-        if not df.empty:
-             team_names = df["name"].tolist()
-             selected_team = st.selectbox("Select a team", team_names, index=0)
+    if not df.empty:
+        team_names = df["name"].tolist()
+        selected_team = st.selectbox("Select a team", team_names, index=0)
 
-             team = df[df["name"] == selected_team].iloc[0]
+        team = df[df["name"] == selected_team].iloc[0]
 
-             # Header
-             st.markdown(f"## {team['flag']} {team['name']} — Group {team['group']}")
+        # Header
+        st.markdown(f"## {team['flag']} {team['name']} — Group {team['group']}")
 
-             # Metrics
-             m1, m2, m3, m4, m5 = st.columns(5)
-             m1.metric("Points", int(team["points"]))
-             m2.metric("Goal Difference", int(team["gd"]))
-             m3.metric("Goals Scored", int(team["gf"]))
-             m4.metric("Goals Conceded", int(team["ga"]))
-             m5.metric("Matches Played", int(team["played"]))
+        # Metrics
+        m1, m2, m3, m4, m5 = st.columns(5)
+        m1.metric("Points", int(team["points"]))
+        m2.metric("Goal Difference", int(team["gd"]))
+        m3.metric("Goals Scored", int(team["gf"]))
+        m4.metric("Goals Conceded", int(team["ga"]))
+        m5.metric("Matches Played", int(team["played"]))
 
-             # W/D/L breakdown
-             st.markdown("### Record")
-             w, d, l = st.columns(3)
-             w.metric("Wins", int(team["won"]))
-             d.metric("Draws", int(team["drawn"]))
-             l.metric("Losses", int(team["lost"]))
+        # W/D/L breakdown
+        st.markdown("### Record")
+        w, d, l = st.columns(3)
+        w.metric("Wins", int(team["won"]))
+        d.metric("Draws", int(team["drawn"]))
+        l.metric("Losses", int(team["lost"]))
 
-             # Simple bar chart
-             chart_data = pd.DataFrame({
-                 "Category": ["Goals Scored", "Goals Conceded"],
-                 "Goals": [team["gf"], team["ga"]]
-             })
-             st.bar_chart(chart_data.set_index("Category"), use_container_width=True)
-        else:
-             st.warning("No teams match your filters.")
-        if st.button("⬅ Back to Home", key="back_home_from_explorer"):
-            st.session_state.current_page = "home"
-            st.rerun()
-        if st.button("🏆 Standings", key="go_to_standings_from_explorer"):
-            st.session_state.current_page = "stats"
-            st.rerun()
+        # Simple bar chart
+        chart_data = pd.DataFrame({
+            "Category": ["Goals Scored", "Goals Conceded"],
+            "Goals": [team["gf"], team["ga"]]
+        })
+        st.bar_chart(chart_data.set_index("Category"), use_container_width=True)
+    else:
+        st.warning("No teams match your filters.")
+
+    # Navigation buttons (Now perfectly aligned inside Page 3!)
+    if st.button("⬅ Back to Home", key="back_home_from_explorer"):
+        st.session_state.current_page = "home"
+        st.rerun()
+
+    if st.button("🏆 Standings", key="go_to_standings_from_explorer"):
+        st.session_state.current_page = "stats"
+        st.rerun()
 # ----------------------------------------------------------------------
 # Session State Initialization
 # ----------------------------------------------------------------------
