@@ -106,6 +106,7 @@ elif st.session_state.current_page == "stats":
     display_df = st.session_state.teams_df.copy()
     is_live = False
 
+    # Fully expanded flag library supporting the expanded 48-team roster
     FLAG_MAP = {
         "Argentina": "🇦🇷", "Australia": "🇦🇺", "Austria": "🇦🇹", "Belgium": "🇧🇪",
         "Brazil": "🇧🇷", "Cameroon": "🇨🇲", "Canada": "🇨🇦", "Chile": "🇨🇱",
@@ -116,28 +117,35 @@ elif st.session_state.current_page == "stats":
         "Peru": "🇵🇪", "Poland": "🇵🇱", "Portugal": "🇵🇹", "Qatar": "🇶🇦",
         "Saudi Arabia": "🇸🇦", "Senegal": "🇸🇳", "Serbia": "🇷🇸", "South Korea": "🇰🇷",
         "Spain": "🇪🇸", "Sweden": "🇸🇪", "Switzerland": "🇨🇭", "Tunisia": "🇹🇳",
-        "USA": "🇺🇸", "United States": "🇺🇸", "Uruguay": "🇺🇾", "Wales": "🏴󠁧󠁢󠁷󠁬󠁳󠁿"
+        "USA": "🇺🇸", "United States": "🇺🇸", "Uruguay": "🇺🇾", "Wales": "🏴󠁧󠁢󠁷󠁬󠁳󠁿",
+        "Czech Republic": "🇨🇿", "Czechia": "🇨🇿", "Norway": "🇳🇴", "Iraq": "🇮🇶",
+        "Algeria": "🇩🇿", "Jordan": "🇯🇴", "Scotland": "🏴󠁧󠁢󠁳󠁣󠁴󠁿", "Haiti": "🇭🇹",
+        "Turkey": "🇹🇷", "Paraguay": "🇵🇾", "Ivory Coast": "🇨🇮", "Curaçao": "🇨🇼",
+        "New Zealand": "🇳🇿", "Cape Verde": "🇨🇻", "Panama": "🇵🇦", "Uzbekistan": "🇺🇿",
+        "DR Congo": "🇨🇩", "South Africa": "🇿🇦", "Bosna a Hercegovina": "🇧🇦", "Bosnia": "🇧🇦"
     }
 
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
     }
 
+    # Step 1: Isolated lookup fetch (doesn't break the main loop if it hits an API timeout)
+    team_lookup = {}
     try:
-        # 1. Fetch the master name dictionary from the teams endpoint
-        team_lookup = {}
-        teams_resp = requests.get("https://worldcup26.ir/get/teams", headers=headers, timeout=6)
+        teams_resp = requests.get("https://worldcup26.ir/get/teams", headers=headers, timeout=5)
         if teams_resp.status_code == 200:
             teams_data = teams_resp.json()
-            # If wrapped in an object/dict list helper
             raw_teams_list = teams_data if isinstance(teams_data, list) else teams_data.get("data", [])
             for t in raw_teams_list:
                 t_id = str(t.get("id") or t.get("team_id") or "")
                 t_name = t.get("name_en") or t.get("name")
                 if t_id and t_name:
                     team_lookup[t_id] = t_name
+    except Exception:
+        pass  # Gracefully skip lookup fetching constraints if down
 
-        # 2. Process standings groups
+    # Step 2: Main group standings fetch operation
+    try:
         groups_resp = requests.get("https://worldcup26.ir/get/groups", headers=headers, timeout=6)
         if groups_resp.status_code == 200:
             groups_data = groups_resp.json()
@@ -157,12 +165,11 @@ elif st.session_state.current_page == "stats":
                     group_letter = group.get("name", "")
                     for team in group.get("teams", []):
                         if isinstance(team, dict):
-                            # Pull out identifier code from the standings node
                             team_id_str = str(team.get("id") or team.get("team_id") or "")
 
-                            # Match ID code back to the loaded text index values
+                            # Fallback chain prioritizing explicit keys before looking up ID indices
                             team_name = team.get("name_en") or team.get("name") or team_lookup.get(
-                                team_id_str) or f"Team ID: {team_id_str}"
+                                team_id_str) or f"Team {team_id_str}"
                             team_flag = FLAG_MAP.get(team_name, "⚽")
 
                             all_teams.append({
@@ -227,7 +234,7 @@ elif st.session_state.current_page == "stats":
             st.session_state.current_page = "🔍Explorer"
             st.rerun()
 
-# --- NEW PAGE: MATCH SIMULATOR SECTION ---
+# --- PAGE: MATCH SIMULATOR SECTION ---
 elif st.session_state.current_page == "simulator":
     st.title("⚔️ Tournament Match Simulator")
     st.caption("Simulate match outcomes and watch the global league standings update in real-time.")
