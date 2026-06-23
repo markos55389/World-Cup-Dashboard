@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import random
+import requests
 
 # ----------------------------------------------------------------------
 # 1. Page Configuration (MUST be first call, only once)
