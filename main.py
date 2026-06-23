@@ -3,13 +3,16 @@ import pandas as pd
 import random
 
 # Load your World Cup data at the very top of the script
-@st.cache_data  # This stops Streamlit from re-loading the file every time you click a button
-def load_data():
-    # Make sure 'world_cup_data.csv' is saved in your GitHub repo folder next to main.py
-    return pd.read_csv("/Users/markos/panda_tutorial/world_cup_data.csv")
+world_cup_data = {
+    "Country": ["Argentina", "France", "Croatia", "Morocco", "Brazil", "Netherlands"],
+    "Group": ["C", "D", "F", "F", "G", "A"],
+    "Points": [9, 9, 5, 7, 6, 7],
+    "Goals For": [15, 16, 8, 6, 8, 10],
+    "Wins": [4, 4, 2, 3, 2, 2]
+}
 
-# Initialize df so it's accessible everywhere in your app
-df = load_data()
+# 2. Convert it to a DataFrame (df) right away
+df = pd.DataFrame(world_cup_data)
 # ----------------------------------------------------------------------
 # Page Configuration
 # ----------------------------------------------------------------------
