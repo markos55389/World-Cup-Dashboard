@@ -98,11 +98,7 @@ elif st.session_state.current_page == "stats":
     )
 
     # A button to head back to the home layout
-    if st.button("⬅ Back to Home"):
-        st.session_state.current_page = "home"
-        st.rerun()
-
-    if st.button("🔍Team Explorer"):
+    if st.button("🔍 Team Explorer", key="go_to_explorer_from_stats"):
         st.session_state.current_page = "🔍Explorer"
         st.rerun()
 
@@ -146,7 +142,7 @@ if st.button("⬅ Back to Home", key="back_home_from_explorer"):
         st.session_state.current_page = "home"
         st.rerun()
 
-if st.button("🏆 Standings", key="back_stats_from_explorer"):
+if st.button("🏆 Standings", key="go_to_standings_from_explorer"):
         st.session_state.current_page = "stats"
         st.rerun()
 # ----------------------------------------------------------------------
