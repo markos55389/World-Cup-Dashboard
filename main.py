@@ -106,7 +106,6 @@ elif st.session_state.current_page == "stats":
     display_df = st.session_state.teams_df.copy()
     is_live = False
 
-    # Comprehensive Flag Mapping Dictionary for World Cup Teams
     FLAG_MAP = {
         "Argentina": "🇦🇷", "Australia": "🇦🇺", "Austria": "🇦🇹", "Belgium": "🇧🇪",
         "Brazil": "🇧🇷", "Cameroon": "🇨🇲", "Canada": "🇨🇦", "Chile": "🇨🇱",
@@ -120,16 +119,28 @@ elif st.session_state.current_page == "stats":
         "USA": "🇺🇸", "United States": "🇺🇸", "Uruguay": "🇺🇾", "Wales": "🏴󠁧󠁢󠁷󠁬󠁳󠁿"
     }
 
-    # Live API Connector Attempt
-    api_url = "https://worldcup26.ir/get/groups"
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
     }
 
     try:
-        response = requests.get(api_url, headers=headers, timeout=6)
-        if response.status_code == 200:
-            groups_data = response.json()
+        # 1. Fetch the master name dictionary from the teams endpoint
+        team_lookup = {}
+        teams_resp = requests.get("https://worldcup26.ir/get/teams", headers=headers, timeout=6)
+        if teams_resp.status_code == 200:
+            teams_data = teams_resp.json()
+            # If wrapped in an object/dict list helper
+            raw_teams_list = teams_data if isinstance(teams_data, list) else teams_data.get("data", [])
+            for t in raw_teams_list:
+                t_id = str(t.get("id") or t.get("team_id") or "")
+                t_name = t.get("name_en") or t.get("name")
+                if t_id and t_name:
+                    team_lookup[t_id] = t_name
+
+        # 2. Process standings groups
+        groups_resp = requests.get("https://worldcup26.ir/get/groups", headers=headers, timeout=6)
+        if groups_resp.status_code == 200:
+            groups_data = groups_resp.json()
 
             raw_groups_list = []
             if isinstance(groups_data, list):
@@ -137,8 +148,6 @@ elif st.session_state.current_page == "stats":
             elif isinstance(groups_data, dict):
                 if "data" in groups_data and isinstance(groups_data["data"], list):
                     raw_groups_list = groups_data["data"]
-                elif "groups" in groups_data and isinstance(groups_data["groups"], list):
-                    raw_groups_list = groups_data["groups"]
                 else:
                     raw_groups_list = [v for v in groups_data.values() if isinstance(v, dict)]
 
@@ -148,11 +157,12 @@ elif st.session_state.current_page == "stats":
                     group_letter = group.get("name", "")
                     for team in group.get("teams", []):
                         if isinstance(team, dict):
-                            # Adaptive name resolver step
-                            team_name = team.get("name_en") or team.get(
-                                "name") or f"Team ID: {team.get('team_id', 'Unknown')}"
+                            # Pull out identifier code from the standings node
+                            team_id_str = str(team.get("id") or team.get("team_id") or "")
 
-                            # Match flag dynamically based on dictionary, default to football if missing
+                            # Match ID code back to the loaded text index values
+                            team_name = team.get("name_en") or team.get("name") or team_lookup.get(
+                                team_id_str) or f"Team ID: {team_id_str}"
                             team_flag = FLAG_MAP.get(team_name, "⚽")
 
                             all_teams.append({
@@ -171,8 +181,6 @@ elif st.session_state.current_page == "stats":
             if all_teams:
                 display_df = pd.DataFrame(all_teams)
                 is_live = True
-        else:
-            st.error(f"⚠️ API responded with bad HTTP code: {response.status_code}")
     except Exception as api_error:
         st.error("⚠️ The live API connection failed to load successfully.")
         st.info(f"Detailed Troubleshooting Context: {api_error}")
