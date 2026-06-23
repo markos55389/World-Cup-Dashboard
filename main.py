@@ -116,23 +116,40 @@ elif st.session_state.current_page == "stats":
         response = requests.get(api_url, headers=headers, timeout=6)
         if response.status_code == 200:
             groups_data = response.json()
+
+            # Robust extraction layer: ensure groups_data points to an iterable list of group objects
+            raw_groups_list = []
+            if isinstance(groups_data, list):
+                raw_groups_list = groups_data
+            elif isinstance(groups_data, dict):
+                # Check for standard nested wrapper keys
+                if "data" in groups_data and isinstance(groups_data["data"], list):
+                    raw_groups_list = groups_data["data"]
+                elif "groups" in groups_data and isinstance(groups_data["groups"], list):
+                    raw_groups_list = groups_data["groups"]
+                else:
+                    # If it's a dictionary of groups structured by key, extract the values
+                    raw_groups_list = [v for v in groups_data.values() if isinstance(v, dict)]
+
             all_teams = []
-            for group in groups_data:
-                group_letter = group.get("name", "")
-                for team in group.get("teams", []):
-                    all_teams.append({
-                        "name": team.get("name_en", team.get("name", "")),
-                        "group": group_letter,
-                        "played": int(team.get("played", 0)),
-                        "won": int(team.get("won", 0)),
-                        "drawn": int(team.get("drawn", 0)),
-                        "lost": int(team.get("lost", 0)),
-                        "gf": int(team.get("goals_for", 0)),
-                        "ga": int(team.get("goals_against", 0)),
-                        "gd": int(team.get("goal_difference", 0)),
-                        "points": int(team.get("points", 0)),
-                        "flag": "⚽"
-                    })
+            for group in raw_groups_list:
+                if isinstance(group, dict):
+                    group_letter = group.get("name", "")
+                    for team in group.get("teams", []):
+                        if isinstance(team, dict):
+                            all_teams.append({
+                                "name": team.get("name_en", team.get("name", "")),
+                                "group": group_letter,
+                                "played": int(team.get("played", 0)),
+                                "won": int(team.get("won", 0)),
+                                "drawn": int(team.get("drawn", 0)),
+                                "lost": int(team.get("lost", 0)),
+                                "gf": int(team.get("goals_for", team.get("gf", 0))),
+                                "ga": int(team.get("goals_against", team.get("ga", 0))),
+                                "gd": int(team.get("goal_difference", team.get("gd", 0))),
+                                "points": int(team.get("points", 0)),
+                                "flag": "⚽"
+                            })
             if all_teams:
                 display_df = pd.DataFrame(all_teams)
                 is_live = True
