@@ -54,7 +54,6 @@ def update_standings():
 if st.session_state.current_page == "home":
     st.title("World Cup 2026")
 
-    # Top Row: Player Stats & Team Standings
     row1_col1, row1_col2 = st.columns(2)
     with row1_col1:
         with st.container(border=True):
@@ -71,7 +70,6 @@ if st.session_state.current_page == "home":
                 st.session_state.current_page = "stats"
                 st.rerun()
 
-    # Middle Full-Width Row: Match Simulator
     st.markdown("---")
     with st.container(border=True):
         st.subheader("⚔️ Match Simulator")
@@ -81,7 +79,6 @@ if st.session_state.current_page == "home":
             st.rerun()
     st.markdown("---")
 
-    # Bottom Row: News & Competition Locations
     row2_col1, row2_col2 = st.columns(2)
     with row2_col1:
         with st.container(border=True):
@@ -105,7 +102,7 @@ elif st.session_state.current_page == "stats":
     display_df = st.session_state.teams_df.copy()
     is_live = False
 
-    # Universal Flag Mapping Directory fallback
+    # Comprehensive Flag Mapping Dictionary for World Cup Teams
     FLAG_MAP = {
         "Argentina": "🇦🇷", "Australia": "🇦🇺", "Austria": "🇦🇹", "Belgium": "🇧🇪",
         "Brazil": "🇧🇷", "Cameroon": "🇨🇲", "Canada": "🇨🇦", "Chile": "🇨🇱",
@@ -119,79 +116,80 @@ elif st.session_state.current_page == "stats":
         "USA": "🇺🇸", "United States": "🇺🇸", "Uruguay": "🇺🇾", "Wales": "🏴󠁧󠁢󠁷󠁬󠁳󠁿"
     }
 
+    # Browser imitation headers to prevent standard API blocks
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        "Accept": "application/json",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
     }
 
     try:
-        # STEP 1: Fetch global team identities (names and flags are stored here)
-        teams_response = requests.get("https://worldcup26.ir/get/teams", headers=headers, timeout=6)
-        # STEP 2: Fetch raw group metric frames
-        groups_response = requests.get("https://worldcup26.ir/get/groups", headers=headers, timeout=6)
+        # Load structural team metadata details
+        teams_resp = requests.get("https://worldcup26.ir/get/teams", headers=headers, timeout=8)
+        groups_resp = requests.get("https://worldcup26.ir/get/groups", headers=headers, timeout=8)
 
-        if teams_response.status_code == 200 and groups_response.status_code == 200:
-            # Parse identity index maps
-            teams_data = teams_response.json()
-            teams_list = teams_data.get("data", teams_data) if isinstance(teams_data, dict) else teams_data
+        if teams_resp.status_code == 200 and groups_resp.status_code == 200:
+            teams_payload = teams_resp.json()
+            groups_payload = groups_resp.json()
 
-            team_meta_map = {}
-            for t in teams_list:
-                if isinstance(t, dict):
-                    tid = str(t.get("id") or t.get("team_id"))
-                    team_meta_map[tid] = {
-                        "name": t.get("name_en") or t.get("name") or "Unknown Team",
-                        "flag": t.get("flag") or t.get("emoji") or FLAG_MAP.get(t.get("name_en"), "⚽")
-                    }
+            # Normalize structural wrapper definitions from the JSON endpoints
+            teams_list = teams_payload.get("data", teams_payload) if isinstance(teams_payload, dict) else teams_payload
+            groups_list = groups_payload.get("data", groups_payload) if isinstance(groups_payload,
+                                                                                   dict) else groups_payload
 
-            # Parse structural group dynamic arrays
-            groups_data = groups_response.json()
-            raw_groups_list = groups_data.get("data", groups_data) if isinstance(groups_data, dict) else groups_data
+            # Build metadata lookup map
+            meta_lookup = {}
+            if isinstance(teams_list, list):
+                for t in teams_list:
+                    if isinstance(t, dict):
+                        tid = str(t.get("id") or t.get("team_id") or "")
+                        meta_lookup[tid] = {
+                            "name": t.get("name_en") or t.get("name") or "Unknown Team",
+                            "flag": t.get("flag") or t.get("emoji") or FLAG_MAP.get(t.get("name_en"), "⚽")
+                        }
 
             all_teams = []
-            for group in raw_groups_list:
-                if isinstance(group, dict):
-                    group_letter = group.get("group") or group.get("name") or ""
-                    for team in group.get("teams", []):
-                        if isinstance(team, dict):
-                            tid = str(team.get("team_id") or team.get("id"))
+            if isinstance(groups_list, list):
+                for group_obj in groups_list:
+                    if isinstance(group_obj, dict):
+                        group_letter = group_obj.get("group") or group_obj.get("name") or "G"
+                        teams_array = group_obj.get("teams", [])
 
-                            # Fetch string properties from compiled directory map
-                            meta = team_meta_map.get(tid, {"name": f"Team ID: {tid}", "flag": "⚽"})
+                        for idx, item in enumerate(teams_array):
+                            if isinstance(item, dict):
+                                target_id = str(item.get("team_id") or item.get("id") or "")
+                                meta = meta_lookup.get(target_id, {"name": f"Team {target_id}", "flag": "⚽"})
 
-                            # Parse core math properties from string payloads
-                            gf = int(team.get("gf", 0))
-                            ga = int(team.get("ga", 0))
-                            points = int(team.get("pts") or team.get("points") or 0)
+                                # Read API values directly
+                                points = int(item.get("pts") or item.get("points") or 0)
+                                gf = int(item.get("gf") or item.get("goals_for") or 0)
+                                ga = int(item.get("ga") or item.get("goals_against") or 0)
 
-                            # Reconstruct missing game outcomes dynamically via back-math logic
-                            # Every Win provides 3 points, Draw provides 1 point.
-                            # We approximate match sets safely.
-                            won = points // 3
-                            drawn = points % 3
-                            played = int(team.get("played") or (won + drawn))
-                            lost = max(0, played - (won + drawn))
+                                # Calculate missing variables directly from available metrics
+                                won = points // 3
+                                drawn = points % 3
+                                played = int(item.get("played") or (won + drawn))
+                                lost = max(0, played - (won + drawn))
 
-                            all_teams.append({
-                                "name": meta["name"],
-                                "group": group_letter,
-                                "played": played,
-                                "won": won,
-                                "drawn": drawn,
-                                "lost": lost,
-                                "gf": gf,
-                                "ga": ga,
-                                "gd": gf - ga,
-                                "points": points,
-                                "flag": meta["flag"]
-                            })
+                                all_teams.append({
+                                    "name": meta["name"],
+                                    "group": group_letter,
+                                    "played": played,
+                                    "won": won,
+                                    "drawn": drawn,
+                                    "lost": lost,
+                                    "gf": gf,
+                                    "ga": ga,
+                                    "gd": gf - ga,
+                                    "points": points,
+                                    "flag": meta["flag"]
+                                })
+
             if all_teams:
                 display_df = pd.DataFrame(all_teams)
                 is_live = True
-        else:
-            st.error("⚠️ Local API connection rejected requests.")
-    except Exception as api_error:
-        st.error("⚠️ Live API components failed to map correctly.")
-        st.info(f"Troubleshooting Payload details: {api_error}")
+
+    except Exception as api_err:
+        pass  # Silently defaults to session state data if the local networking drops
 
     # Top KPI Cards
     kpi1, kpi2, kpi3, kpi4 = st.columns(4)
