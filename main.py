@@ -2,6 +2,14 @@ import streamlit as st
 import pandas as pd
 import random
 
+# Load your World Cup data at the very top of the script
+@st.cache_data  # This stops Streamlit from re-loading the file every time you click a button
+def load_data():
+    # Make sure 'world_cup_data.csv' is saved in your GitHub repo folder next to main.py
+    return pd.read_csv("world_cup_data.csv")
+
+# Initialize df so it's accessible everywhere in your app
+df = load_data()
 # ----------------------------------------------------------------------
 # Page Configuration
 # ----------------------------------------------------------------------
