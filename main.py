@@ -138,11 +138,10 @@ elif st.session_state.current_page == "🔍Explorer":
              st.bar_chart(chart_data.set_index("Category"), use_container_width=True)
          else:
              st.warning("No teams match your filters.")
-if st.button("⬅ Back to Home", key="back_home_from_explorer"):
+    if st.button("⬅ Back to Home", key="back_home_from_explorer"):
         st.session_state.current_page = "home"
         st.rerun()
-
-if st.button("🏆 Standings", key="go_to_standings_from_explorer"):
+    if st.button("🏆 Standings", key="go_to_standings_from_explorer"):
         st.session_state.current_page = "stats"
         st.rerun()
 # ----------------------------------------------------------------------
