@@ -2,273 +2,17 @@ import streamlit as st
 import pandas as pd
 import random
 
-
-# Load your World Cup data at the very top of the script
-world_cup_data = {
-    "flag": ["🇦🇷", "🇫🇷", "🇭🇷", "🇲🇦", "🇧🇷", "🇳🇱"],
-    "name": ["Argentina", "France", "Croatia", "Morocco", "Brazil", "Netherlands"],
-    "group": ["C", "D", "F", "F", "G", "A"],
-    "played": [7, 7, 7, 7, 5, 5],
-    "won": [4, 4, 2, 3, 3, 3],
-    "drawn": [2, 1, 4, 2, 1, 2],
-    "lost": [1, 2, 1, 2, 1, 0],
-    "gf": [15, 16, 8, 6, 8, 10],
-    "ga": [8, 7, 7, 5, 3, 4],
-    "gd": [7, 9, 1, 1, 5, 6],
-    "points": [14, 13, 10, 11, 10, 11]
-}
-
-df = pd.DataFrame(world_cup_data)
 # ----------------------------------------------------------------------
-# Page Configuration
+# 1. Page Configuration (MUST be first call, only once)
 # ----------------------------------------------------------------------
 st.set_page_config(
     page_title="FIFA World Cup 2026",
     page_icon="⚽",
-    layout="wide",
-    initial_sidebar_state="expanded"
+    layout="wide"
 )
-import streamlit as st
 
-st.set_page_config(layout="wide")
-
-# 1. Initialize the navigation state if it doesn't exist yet
-if "current_page" not in st.session_state:
-    st.session_state.current_page = "home"
-
-# --- PAGE 1: HOME (THE 4 BOXES) ---
-if st.session_state.current_page == "home":
-    st.title("World Cup 2026")
-
-    # Row 1
-    row1_col1, row1_col2 = st.columns(2)
-
-    with row1_col1:
-        with st.container(border=True):
-            st.subheader("Player Stats")
-            st.write("View individual player performances and top scorers!")
-
-            # 💡 New button to route to player stats page
-            if st.button("Go to Player Stats ➔", type="primary", key="go_to_player_stats"):
-                st.session_state.current_page = "player_stats"
-                st.rerun()
-
-    with row1_col2:
-        with st.container(border=True):
-            st.subheader("Team Stats")
-            st.write("Click below to view the detailed statistics of all the teams!")
-
-            # Clicking this button changes the state to load the second view
-            if st.button("Go to World Cup Stats ➔", type="primary"):
-                st.session_state.current_page = "stats"
-                st.rerun()
-
-    # Row 2
-    row2_col1, row2_col2 = st.columns(2)
-
-    with row2_col1:
-        with st.container(border=True):
-            st.subheader("News")
-            st.write("Get the latest news about all of your favourite teams!")
-
-            if st.button("Go to the latest news ➔", type="primary"):
-                st.session_state.current_page = "news"
-                st.rerun()
-
-    with row2_col2:
-        with st.container(border=True):
-            st.subheader("Competition")
-            st.write("Find out where we are currently in the competition!")
-
-            if st.button("Find out where we are ➔", type="primary"):
-                st.session_state.current_page = "competition"
-                st.rerun()
-
-# --- PAGE 2: DIFFERENT PART OF THE PROGRAM ---
-elif st.session_state.current_page == "stats":
-    st.subheader("Group Stage Standings")
-
-    # Prepare standings table
-    standings = df.sort_values(
-        by=["points", "gd", "gf"],
-        ascending=[False, False, False]
-    ).reset_index(drop=True)
-    standings.insert(0, "Pos", range(1, len(standings) + 1))
-
-    # Display as nice dataframe
-    st.dataframe(
-        standings[["Pos", "flag", "name", "group", "played", "won", "drawn", "lost", "gf", "ga", "gd", "points"]],
-        column_config={
-            "Pos": st.column_config.NumberColumn("Pos", width="small"),
-            "flag": st.column_config.TextColumn(""),
-            "name": st.column_config.TextColumn("Team", width="medium"),
-            "group": st.column_config.TextColumn("Group", width="small"),
-            "gd": st.column_config.NumberColumn("GD", help="Goal Difference"),
-            "points": st.column_config.NumberColumn("Pts", help="Points"),
-        },
-        hide_index=True,
-        use_container_width=True,
-        height=500
-    )
-
-    # Navigation Button
-    if st.button("🔍 Team Explorer", key="go_to_explorer_from_stats"):
-        st.session_state.current_page = "🔍Explorer"
-        st.rerun()
-
-# --- PAGE 3: DIFFERENT PART OF THE PROGRAM ---
-elif st.session_state.current_page == "🔍Explorer":
-    st.subheader("Team Deep Dive")
-
-    if not df.empty:
-        team_names = df["name"].tolist()
-        selected_team = st.selectbox("Select a team", team_names, index=0)
-
-        team = df[df["name"] == selected_team].iloc[0]
-
-        # Header
-        st.markdown(f"## {team['flag']} {team['name']} — Group {team['group']}")
-
-        # Metrics
-        m1, m2, m3, m4, m5 = st.columns(5)
-        m1.metric("Points", int(team["points"]))
-        m2.metric("Goal Difference", int(team["gd"]))
-        m3.metric("Goals Scored", int(team["gf"]))
-        m4.metric("Goals Conceded", int(team["ga"]))
-        m5.metric("Matches Played", int(team["played"]))
-
-        # W/D/L breakdown
-        st.markdown("### Record")
-        w, d, l = st.columns(3)
-        w.metric("Wins", int(team["won"]))
-        d.metric("Draws", int(team["drawn"]))
-        l.metric("Losses", int(team["lost"]))
-
-        # Simple bar chart
-        chart_data = pd.DataFrame({
-            "Category": ["Goals Scored", "Goals Conceded"],
-            "Goals": [team["gf"], team["ga"]]
-        })
-        st.bar_chart(chart_data.set_index("Category"), use_container_width=True)
-    else:
-        st.warning("No teams match your filters.")
-
-    # Navigation buttons (Now perfectly aligned inside Page 3!)
-    if st.button("⬅ Back to Home", key="back_home_from_explorer"):
-        st.session_state.current_page = "home"
-        st.rerun()
-
-    if st.button("🏆 Standings", key="go_to_standings_from_explorer"):
-        st.session_state.current_page = "stats"
-        st.rerun()
-
-# --- PAGE 4: PLAYER STATS ---
-elif st.session_state.current_page == "player_stats":
-    st.subheader("⚽ Player Statistics")
-    st.write("Top Scorers and Goal Leaders")
-
-    # Hardcoded mock player data
-    player_data = {
-        "Player": ["Lionel Messi", "Kylian Mbappé", "Luka Modrić", "Neymar Jr"],
-        "Team": ["Argentina", "France", "Croatia", "Brazil"],
-        "Goals": [7, 8, 3, 2],
-        "Assists": [3, 2, 1, 1]
-    }
-    player_df = pd.DataFrame(player_data)
-
-    # Display the player stats
-    st.dataframe(player_df, use_container_width=True, hide_index=True)
-
-    # 💡 Back to Home button with its own unique key and correct indentation
-    if st.button("⬅ Back to Home", key="back_home_from_players"):
-        st.session_state.current_page = "home"
-        st.rerun()
-
-# --- PAGE 5: News ---
-elif st.session_state.current_page == "news":
-    st.subheader("📰Latest News")
-    st.write("Find the latest news about your team")
-
-    # 1. Create the text input box
-    search_query = st.text_input(
-        "🔍 Search Team News",
-        placeholder="Type team name (e.g., Argentina)...",
-        key="team_news_search_input_no_urllib"
-    )
-
-    if search_query.strip():
-        # 2. Clean the input and swap spaces out for '+' signs so Google's URL can read it safely
-        clean_team_name = search_query.strip().replace(" ", "+")
-
-        # 3. Construct the Google search link directly
-        google_url = f"https://www.google.com/search?q={clean_team_name}+latest+football+news"
-
-        # 4. Display the direct link button
-        st.link_button(
-            label=f"Read latest news for {search_query.strip()} ➔",
-            url=google_url,
-            type="primary"
-        )
-
-    # 💡 Back to Home button with its own unique key and correct indentation
-    if st.button("⬅ Back to Home", key="back_home_from_news"):
-        st.session_state.current_page = "home"
-        st.rerun()
-
-# --- PAGE 6: Competiton ---
-elif st.session_state.current_page == "competition":
-    st.subheader("⚽ Competition Whereabouts")
-    st.write("Find out where we are in the competition")
-
-    # 1. Create the competition search box
-    comp_search_query = st.text_input(
-        "🔍 Search Team Standings",
-        placeholder="Type team name (e.g., France)...",
-        key="competition_team_search_input"
-    )
-
-    if comp_search_query.strip():
-        # 2. Convert spaces to '+' characters for a clean Google URL query
-        clean_comp_team = comp_search_query.strip().replace(" ", "+")
-
-        # 3. Construct the Google search link for the specific team + tournament
-        comp_google_url = f"https://www.google.com/search?q={clean_comp_team}+world+cup"
-
-        # 4. Display the direct link button
-        st.link_button(
-            label=f"Check {comp_search_query.strip()}'s World Cup progress ➔",
-            url=comp_google_url,
-            type="primary"
-        )
-    # --- QUICK TOURNAMENT LINKS ---
-    st.markdown("### 📅 Quick Schedules & Results")
-
-    # 1. URL-encoded links for upcoming and past fixtures
-    upcoming_games_url = "https://www.google.com/search?q=world+cup+upcoming+games+fixtures"
-    latest_played_url = "https://www.google.com/search?q=world+cup+latest+played+games+results"
-
-    # 2. Display them side-by-side using Streamlit columns
-    link_col1, link_col2 = st.columns(2)
-
-    with link_col1:
-        st.link_button(
-            label="📅 See Upcoming Games",
-            url=upcoming_games_url,
-            use_container_width=True
-        )
-
-    with link_col2:
-        st.link_button(
-            label="⚽ See Latest Played Games",
-            url=latest_played_url,
-            use_container_width=True
-        )
-    # 💡 Back to Home button with its own unique key and correct indentation
-    if st.button("⬅ Back to Home", key="back_home_from_competition"):
-        st.session_state.current_page = "home"
-        st.rerun()
 # ----------------------------------------------------------------------
-# Session State Initialization
+# 2. Session State Initialization
 # ----------------------------------------------------------------------
 if "teams_df" not in st.session_state:
     initial_data = [
@@ -285,183 +29,249 @@ if "teams_df" not in st.session_state:
         {"name": "Netherlands", "flag": "🇳🇱", "group": "C", "played": 3, "won": 1, "drawn": 1, "lost": 1, "gf": 4,
          "ga": 4},
     ]
-    df = pd.DataFrame(initial_data)
-    df["gd"] = df["gf"] - df["ga"]
-    df["points"] = df["won"] * 3 + df["drawn"]
-    st.session_state.teams_df = df
+    df_init = pd.DataFrame(initial_data)
+    df_init["gd"] = df_init["gf"] - df_init["ga"]
+    df_init["points"] = df_init["won"] * 3 + df_init["drawn"]
+    st.session_state.teams_df = df_init
+
+if "current_page" not in st.session_state:
+    st.session_state.current_page = "home"
 
 
 def update_standings():
-    """Recalculate GD and Points"""
-    df = st.session_state.teams_df
-    df["gd"] = df["gf"] - df["ga"]
-    df["points"] = df["won"] * 3 + df["drawn"]
-    st.session_state.teams_df = df
+    df_temp = st.session_state.teams_df
+    df_temp["gd"] = df_temp["gf"] - df_temp["ga"]
+    df_temp["points"] = df_temp["won"] * 3 + df_temp["drawn"]
+    st.session_state.teams_df = df_temp
 
 
 # ----------------------------------------------------------------------
-# Sidebar
+# 3. PAGE NAVIGATION ROUTER
 # ----------------------------------------------------------------------
-with st.sidebar:
-    st.title("⚙️ Controls")
 
-    # Group Filter
-    groups = sorted(st.session_state.teams_df["group"].unique())
-    selected_groups = st.multiselect(
-        "Filter by Group",
-        groups,
-        default=groups
-    )
+# --- PAGE 1: HOME ---
+if st.session_state.current_page == "home":
+    st.title("World Cup 2026")
 
-    # Search
-    search_term = st.text_input("🔍 Search Team", placeholder="Type team name...")
-
-    st.divider()
-
-    # Add New Team
-    with st.expander("➕ Add New Team", expanded=False):
-        with st.form("add_team_form"):
-            new_name = st.text_input("Team Name")
-            new_flag = st.text_input("Flag Emoji", value="🏳️")
-            new_group = st.selectbox("Group", ["A", "B", "C", "D", "E", "F", "G", "H"])
-
-            col1, col2 = st.columns(2)
-            with col1:
-                new_played = st.number_input("Matches Played", 0, 10, 0)
-                new_won = st.number_input("Won", 0, 10, 0)
-                new_drawn = st.number_input("Drawn", 0, 10, 0)
-            with col2:
-                new_lost = st.number_input("Lost", 0, 10, 0)
-                new_gf = st.number_input("Goals For", 0, 50, 0)
-                new_ga = st.number_input("Goals Against", 0, 50, 0)
-
-            submitted = st.form_submit_button("Add Team")
-            if submitted and new_name:
-                new_team = pd.DataFrame([{
-                    "Name": new_name,
-                    "Flag": new_flag,
-                    "Group": new_group,
-                    "Played": new_played,
-                    "Won": new_won,
-                    "Drawn": new_drawn,
-                    "Lost": new_lost,
-                    "GF": new_gf,
-                    "GA": new_ga
-                }])
-                st.session_state.teams_df = pd.concat(
-                    [st.session_state.teams_df, new_team], ignore_index=True
-                )
-                update_standings()
-                st.success(f"{new_name} added successfully!")
+    # Top Row: Player Stats & Team Standings
+    row1_col1, row1_col2 = st.columns(2)
+    with row1_col1:
+        with st.container(border=True):
+            st.subheader("Player Stats")
+            st.write("View individual player performances and top scorers!")
+            if st.button("Go to Player Stats ➔", type="primary", key="btn_p_stats"):
+                st.session_state.current_page = "player_stats"
+                st.rerun()
+    with row1_col2:
+        with st.container(border=True):
+            st.subheader("Team Standings")
+            st.write("View detailed group stage metrics and team ranks!")
+            if st.button("Go to World Cup Standings ➔", type="primary", key="btn_t_stats"):
+                st.session_state.current_page = "stats"
                 st.rerun()
 
+    # Middle Full-Width Row: Match Simulator
+    st.markdown("---")
+    with st.container(border=True):
+        st.subheader("⚔️ Match Simulator")
+        st.write("Predict match outcomes, run random simulations, and calculate updated table dynamics live!")
+        if st.button("Launch Simulator Engine ➔", type="primary", key="btn_simulator_page"):
+            st.session_state.current_page = "simulator"
+            st.rerun()
+    st.markdown("---")
+
+    # Bottom Row: News & Competition Locations
+    row2_col1, row2_col2 = st.columns(2)
+    with row2_col1:
+        with st.container(border=True):
+            st.subheader("News")
+            st.write("Get the latest updates about your favorite teams!")
+            if st.button("Go to the latest news ➔", type="primary", key="btn_news"):
+                st.session_state.current_page = "news"
+                st.rerun()
+    with row2_col2:
+        with st.container(border=True):
+            st.subheader("Competition")
+            st.write("Track current tournament locations and standings!")
+            if st.button("Find out where we are ➔", type="primary", key="btn_comp"):
+                st.session_state.current_page = "competition"
+                st.rerun()
+
+# --- PAGE 2: TEAM STATS & STANDINGS ---
+elif st.session_state.current_page == "stats":
+    st.title("🏆 FIFA World Cup 2026 Standings")
+    df_filtered = st.session_state.teams_df.copy()
+
+    # Top KPI Cards
+    kpi1, kpi2, kpi3, kpi4 = st.columns(4)
+    kpi1.metric("Registered Teams", len(df_filtered))
+    kpi2.metric("Total Goals Scored", int(df_filtered["gf"].sum()))
+    kpi3.metric("Aggregated Matches", int(df_filtered["played"].sum()))
+    kpi4.metric("Avg Points Per Team", round(df_filtered["points"].mean(), 1) if len(df_filtered) > 0 else 0)
+
     st.divider()
+    st.subheader("Group Stage Standings Table")
 
-    if st.button("🔄 Reset All Data", type="secondary"):
-        del st.session_state.teams_df
-        st.rerun()
+    standings = df_filtered.sort_values(by=["points", "gd", "gf"], ascending=[False, False, False]).reset_index(
+        drop=True)
+    standings.insert(0, "Pos", range(1, len(standings) + 1))
 
-# ----------------------------------------------------------------------
-# Main Content
-# ----------------------------------------------------------------------
-st.title("⚽ FIFA World Cup 2026")
-st.caption("Interactive Group Stage Dashboard • Built with Streamlit")
+    st.dataframe(
+        standings[["Pos", "flag", "name", "group", "played", "won", "drawn", "lost", "gf", "ga", "gd", "points"]],
+        column_config={
+            "Pos": st.column_config.NumberColumn("Pos", width="small"),
+            "name": st.column_config.TextColumn("Team"),
+            "group": st.column_config.TextColumn("Group"),
+        },
+        hide_index=True,
+        use_container_width=True,
+        height=400
+    )
 
-# Filter dataframe
-df = st.session_state.teams_df.copy()
-if selected_groups:
-    df = df[df["group"].isin(selected_groups)]
-if search_term:
-    df = df[df["name"].str.contains(search_term, case=False, na=False)]
+    st.divider()
+    b1, b2 = st.columns(2)
+    with b1:
+        if st.button("⬅ Back to Home", key="back_home_from_stats", use_container_width=True):
+            st.session_state.current_page = "home"
+            st.rerun()
+    with b2:
+        if st.button("🔍 Team Deep Dive Explorer", key="go_to_explorer_from_stats", use_container_width=True):
+            st.session_state.current_page = "🔍Explorer"
+            st.rerun()
 
-# Top KPI Cards
-col1, col2, col3, col4 = st.columns(4)
-col1.metric("Teams", len(df))
-col2.metric("Total Goals", int(df["gf"].sum()))
-col3.metric("Matches Played", int(df["played"].sum()))
-col4.metric("Avg Points", round(df["points"].mean(), 1))
+# --- NEW PAGE: MATCH SIMULATOR SECTION ---
+elif st.session_state.current_page == "simulator":
+    st.title("⚔️ Tournament Match Simulator")
+    st.caption("Simulate match outcomes and watch the global league standings update in real-time.")
 
-st.divider()
-
-# Tabs
-# 💡 Added a comma after tab1 to properly unpack the single-item list!
-tab1, = st.tabs(["⚔️ Match Simulator"])
-
-# ===================== TAB 1: MATCH SIMULATOR =====================
-with tab1:
-    st.subheader("Match Simulator")
-    st.caption("Simulate results and watch the standings update live")
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-        home_team = st.selectbox("Home Team", df["name"].tolist(), key="home")
-    with col2:
-        away_team = st.selectbox("Away Team", df["name"].tolist(), key="away", index=1)
+    sc1, sc2 = st.columns(2)
+    with sc1:
+        home_team = st.selectbox("Home Team Selection", st.session_state.teams_df["name"].tolist(), key="home")
+    with sc2:
+        away_team = st.selectbox("Away Team Selection", st.session_state.teams_df["name"].tolist(), key="away", index=1)
 
     if home_team == away_team:
-        st.warning("Please select two different teams.")
+        st.warning("Please select two distinct teams to simulate a match.")
     else:
-        sim_col1, sim_col2 = st.columns([1, 1])
-
-        with sim_col1:
-            if st.button("🎲 Simulate Random Result", use_container_width=True):
-                home_goals = random.randint(0, 4)
-                away_goals = random.randint(0, 4)
-                st.session_state.sim_result = (home_goals, away_goals)
-
-        with sim_col2:
+        sim1, sim2 = st.columns(2)
+        with sim1:
+            if st.button("🎲 Run Instant Random Simulation", use_container_width=True):
+                st.session_state.sim_result = (random.randint(0, 4), random.randint(0, 4))
+        with sim2:
             with st.form("manual_result"):
-                h_goals = st.number_input("Home Goals", 0, 10, 2)
-                a_goals = st.number_input("Away Goals", 0, 10, 1)
-                submit = st.form_submit_button("Submit Result", use_container_width=True)
-
-                if submit:
+                h_goals = st.number_input("Home Team Score Line", 0, 10, 2)
+                a_goals = st.number_input("Away Team Score Line", 0, 10, 1)
+                if st.form_submit_button("Log Official Score Result", use_container_width=True):
                     st.session_state.sim_result = (h_goals, a_goals)
 
-        # Process simulation
         if "sim_result" in st.session_state:
             hg, ag = st.session_state.sim_result
+            t_df = st.session_state.teams_df
 
-            # Update stats
-            teams_df = st.session_state.teams_df
+            hm = t_df["name"] == home_team
+            am = t_df["name"] == away_team
 
-            # Home team
-            home_mask = teams_df["name"] == home_team
-            teams_df.loc[home_mask, "played"] += 1
-            teams_df.loc[home_mask, "gf"] += hg
-            teams_df.loc[home_mask, "ga"] += ag
+            t_df.loc[hm, "played"] += 1;
+            t_df.loc[hm, "gf"] += hg;
+            t_df.loc[hm, "ga"] += ag
+            t_df.loc[am, "played"] += 1;
+            t_df.loc[am, "gf"] += ag;
+            t_df.loc[am, "ga"] += hg
 
-            # Away team
-            away_mask = teams_df["name"] == away_team
-            teams_df.loc[away_mask, "played"] += 1
-            teams_df.loc[away_mask, "gf"] += ag
-            teams_df.loc[away_mask, "ga"] += hg
-
-            # Determine result
             if hg > ag:
-                teams_df.loc[home_mask, "won"] += 1
-                teams_df.loc[away_mask, "lost"] += 1
-                result_text = f"**{home_team}** wins!"
+                t_df.loc[hm, "won"] += 1;
+                t_df.loc[am, "lost"] += 1
+                res_txt = f"**{home_team}** secures the victory!"
             elif ag > hg:
-                teams_df.loc[away_mask, "won"] += 1
-                teams_df.loc[home_mask, "lost"] += 1
-                result_text = f"**{away_team}** wins!"
+                t_df.loc[am, "won"] += 1;
+                t_df.loc[hm, "lost"] += 1
+                res_txt = f"**{away_team}** secures the victory!"
             else:
-                teams_df.loc[home_mask, "drawn"] += 1
-                teams_df.loc[away_mask, "drawn"] += 1
-                result_text = "It's a **draw**!"
+                t_df.loc[hm, "drawn"] += 1;
+                t_df.loc[am, "drawn"] += 1
+                res_txt = "The match ends in a **draw**!"
 
+            st.session_state.teams_df = t_df
             update_standings()
-
-            # Show result
-            st.success(f"### {home_team} {hg} - {ag} {away_team}")
-            st.markdown(result_text)
-
-            # Clear result after showing
+            st.success(f"### Finished: {home_team} {hg} - {ag} {away_team}")
+            st.markdown(res_txt)
             del st.session_state.sim_result
             st.rerun()
 
-# Footer
+    st.divider()
+    if st.button("⬅ Back to Home Layout", key="back_home_from_sim", use_container_width=True):
+        st.session_state.current_page = "home"
+        st.rerun()
+
+# --- PAGE 3: TEAM EXPLORER ---
+elif st.session_state.current_page == "🔍Explorer":
+    st.subheader("Team Deep Dive")
+    df_explorer = st.session_state.teams_df
+    if not df_explorer.empty:
+        team_names = df_explorer["name"].tolist()
+        selected_team = st.selectbox("Select a team", team_names, index=0)
+        team = df_explorer[df_explorer["name"] == selected_team].iloc[0]
+
+        st.markdown(f"## {team['flag']} {team['name']} — Group {team['group']}")
+        m1, m2, m3, m4, m5 = st.columns(5)
+        m1.metric("Points", int(team["points"]))
+        m2.metric("Goal Difference", int(team["gd"]))
+        m3.metric("Goals Scored", int(team["gf"]))
+        m4.metric("Goals Conceded", int(team["ga"]))
+        m5.metric("Matches Played", int(team["played"]))
+
+        st.bar_chart(pd.DataFrame({"Goals": [team["gf"], team["ga"]]}, index=["Scored", "Conceded"]))
+
+    if st.button("⬅ Back to Home", key="back_home_from_explorer"):
+        st.session_state.current_page = "home"
+        st.rerun()
+
+# --- PAGE 4: PLAYER STATS ---
+elif st.session_state.current_page == "player_stats":
+    st.subheader("⚽ Player Statistics")
+    player_data = {
+        "Player": ["Lionel Messi", "Kylian Mbappé", "Luka Modrić", "Neymar Jr"],
+        "Team": ["Argentina", "France", "Croatia", "Brazil"],
+        "Goals": [7, 8, 3, 2], "Assists": [3, 2, 1, 1]
+    }
+    st.dataframe(pd.DataFrame(player_data), use_container_width=True, hide_index=True)
+    if st.button("⬅ Back to Home", key="back_home_from_players"):
+        st.session_state.current_page = "home"
+        st.rerun()
+
+# --- PAGE 5: NEWS ---
+elif st.session_state.current_page == "news":
+    st.subheader("📰 Latest News")
+    search_query = st.text_input("🔍 Search Team News", placeholder="Type team name...")
+    if search_query.strip():
+        clean_name = search_query.strip().replace(" ", "+")
+        st.link_button(f"Read latest news for {search_query.strip()} ➔",
+                       f"https://www.google.com/search?q={clean_name}+latest+football+news", type="primary")
+    if st.button("⬅ Back to Home", key="back_home_from_news"):
+        st.session_state.current_page = "home"
+        st.rerun()
+
+# --- PAGE 6: COMPETITION ---
+elif st.session_state.current_page == "competition":
+    st.subheader("⚽ Competition Whereabouts")
+    comp_query = st.text_input("🔍 Search Team Standings", placeholder="Type team name...")
+    if comp_query.strip():
+        clean_comp = comp_query.strip().replace(" ", "+")
+        st.link_button(f"Check {comp_query.strip()}'s Progress ➔",
+                       f"https://www.google.com/search?q={clean_comp}+world+cup", type="primary")
+
+    st.markdown("### 📅 Quick Schedules & Results")
+    l1, l2 = st.columns(2)
+    l1.link_button("📅 See Upcoming Games", "https://www.google.com/search?q=world+cup+upcoming+games+fixtures",
+                   use_container_width=True)
+    l2.link_button("⚽ See Latest Played Games", "https://www.google.com/search?q=world+cup+latest+played+games+results",
+                   use_container_width=True)
+    if st.button("⬅ Back to Home", key="back_home_from_competition"):
+        st.session_state.current_page = "home"
+        st.rerun()
+
+# ----------------------------------------------------------------------
+# 4. Global Structural Footer
+# ----------------------------------------------------------------------
 st.divider()
 st.caption("Built with ❤️ using Streamlit • Data updates in real-time")
