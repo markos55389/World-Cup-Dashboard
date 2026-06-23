@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import random
-import requests
 
 
 # Load your World Cup data at the very top of the script
