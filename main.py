@@ -148,8 +148,9 @@ elif st.session_state.current_page == "stats":
                     group_letter = group.get("name", "")
                     for team in group.get("teams", []):
                         if isinstance(team, dict):
-                            # Extract official name from API
-                            team_name = team.get("name_en", team.get("name", "Unknown Team"))
+                            # Adaptive name resolver step
+                            team_name = team.get("name_en") or team.get(
+                                "name") or f"Team ID: {team.get('team_id', 'Unknown')}"
 
                             # Match flag dynamically based on dictionary, default to football if missing
                             team_flag = FLAG_MAP.get(team_name, "⚽")
