@@ -37,7 +37,7 @@ if "current_page" not in st.session_state:
 
 # --- PAGE 1: HOME (THE 4 BOXES) ---
 if st.session_state.current_page == "home":
-    st.title("Streamlit 4 Boxes Layout")
+    st.title("World Cup 2026")
 
     # Row 1
     row1_col1, row1_col2 = st.columns(2)
