@@ -144,12 +144,12 @@ elif st.session_state.current_page == "Explorer":
              st.warning("No teams match your filters.")
 
         # A button to head back to the home layout
-if st.button("⬅ Back to Home"):
+if st.button("⬅ Back to Home", key="back_from_group_stage"):
             st.session_state.current_page = "home"
             st.rerun()
 
-if st.button("Team Explorer"):
-            st.session_state.current_page = "Explorer"
+if st.button("Team Stats"):
+            st.session_state.current_page = "Stats"
             st.rerun()
 # ----------------------------------------------------------------------
 # Session State Initialization
