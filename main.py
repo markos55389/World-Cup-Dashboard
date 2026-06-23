@@ -80,7 +80,7 @@ if st.session_state.current_page == "home":
             st.write("Find out where we are currently in the competition!")
 
             if st.button("Find out where we are ➔", type="primary"):
-                st.session_state.current_page = "stats"
+                st.session_state.current_page = "competition"
                 st.rerun()
 
 # --- PAGE 2: DIFFERENT PART OF THE PROGRAM ---
