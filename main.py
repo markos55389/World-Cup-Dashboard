@@ -6,7 +6,7 @@ import requests
 # ----------------------------------------------------------------------
 # 1. Page Configuration (MUST be first call, only once)
 # ----------------------------------------------------------------------
-st.set_page_config(
+st.set_set_page_config(
     page_title="FIFA World Cup 2026",
     page_icon="⚽",
     layout="wide"
@@ -105,7 +105,7 @@ elif st.session_state.current_page == "stats":
     display_df = st.session_state.teams_df.copy()
     is_live = False
 
-    # Fully expanded 48-team roster flag map library
+    # Expanded flag maps covering standard 2026 tournament configurations
     FLAG_MAP = {
         "Argentina": "🇦🇷", "Australia": "🇦🇺", "Austria": "🇦🇹", "Belgium": "🇧🇪",
         "Brazil": "🇧🇷", "Cameroon": "🇨🇲", "Canada": "🇨🇦", "Chile": "🇨🇱",
@@ -116,7 +116,7 @@ elif st.session_state.current_page == "stats":
         "Peru": "🇵🇪", "Poland": "🇵🇱", "Portugal": "🇵🇹", "Qatar": "🇶🇦",
         "Saudi Arabia": "🇸🇦", "Senegal": "🇸🇳", "Serbia": "🇷🇸", "South Korea": "🇰🇷",
         "Spain": "🇪🇸", "Sweden": "🇸🇪", "Switzerland": "🇨🇭", "Tunisia": "🇹🇳",
-        "USA": "🇺🇸", "United States": "🇺🇸", "Uruguay": "🇺🇾", "Wales": "🏴󠁧󠁢󠁷󠁬󠁳󠁿",
+        "USA": "🇺🇸", "United States": "🇺🇸", "Uruguay": "🇺🇾", "Wales": "🏴󠁧󠁢uí󠁿",
         "Czech Republic": "🇨🇿", "Czechia": "🇨🇿", "Norway": "🇳🇴", "Iraq": "🇮🇶",
         "Algeria": "🇩🇿", "Jordan": "🇯🇴", "Scotland": "🏴󠁧󠁢󠁳󠁣󠁴󠁿", "Haiti": "🇭🇹",
         "Turkey": "🇹🇷", "Paraguay": "🇵🇾", "Ivory Coast": "🇨🇮", "Curaçao": "🇨🇼",
@@ -125,27 +125,10 @@ elif st.session_state.current_page == "stats":
     }
 
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
         "Accept": "application/json"
     }
 
-    # Step 1: Fetch metadata names list
-    team_lookup = {}
-    try:
-        teams_resp = requests.get("https://worldcup26.ir/get/teams", headers=headers, timeout=8)
-        if teams_resp.status_code == 200:
-            teams_data = teams_resp.json()
-            raw_teams_list = teams_data if isinstance(teams_data, list) else teams_data.get("data", [])
-            for t in raw_teams_list:
-                if isinstance(t, dict):
-                    t_id = str(t.get("id") or t.get("team_id") or "")
-                    t_name = t.get("name_en") or t.get("name")
-                    if t_id and t_name:
-                        team_lookup[t_id] = t_name
-    except Exception:
-        pass  # Do not drop into full backup if only lookup has an issue
-
-    # Step 2: Main Standings processing flow
     try:
         groups_resp = requests.get("https://worldcup26.ir/get/groups", headers=headers, timeout=8)
         if groups_resp.status_code == 200:
@@ -166,33 +149,34 @@ elif st.session_state.current_page == "stats":
                     group_letter = group.get("name", group.get("group", ""))
                     teams_array = group.get("teams", [])
 
-                    for team in teams_array:
-                        if isinstance(team, dict):
-                            team_id_str = str(team.get("id") or team.get("team_id") or "")
+                    for team_row in teams_array:
+                        if isinstance(team_row, dict):
+                            # CRITICAL STRUCTURAL FIX: Extract nested team block if it exists
+                            team_info = team_row.get("team") if isinstance(team_row.get("team"), dict) else team_row
 
-                            # Fallback sequence evaluating direct payload labels, then lookup dictionaries
-                            team_name = team.get("name_en") or team.get("name") or team_lookup.get(
-                                team_id_str) or f"Team {team_id_str}"
+                            # Parse out team labels from nested object or direct keys
+                            team_name = team_info.get("name_en") or team_info.get("name") or team_row.get(
+                                "name_en") or f"Team ID: {team_row.get('team_id', 'Unknown')}"
                             team_flag = FLAG_MAP.get(team_name, "⚽")
 
                             all_teams.append({
                                 "name": team_name,
                                 "group": group_letter,
-                                "played": int(team.get("played", 0)),
-                                "won": int(team.get("won", 0)),
-                                "drawn": int(team.get("drawn", 0)),
-                                "lost": int(team.get("lost", 0)),
-                                "gf": int(team.get("goals_for", team.get("gf", 0))),
-                                "ga": int(team.get("goals_against", team.get("ga", 0))),
-                                "gd": int(team.get("goal_difference", team.get("gd", 0))),
-                                "points": int(team.get("points", 0)),
+                                "played": int(team_row.get("played", 0)),
+                                "won": int(team_row.get("won", 0)),
+                                "drawn": int(team_row.get("drawn", 0)),
+                                "lost": int(team_row.get("lost", 0)),
+                                "gf": int(team_row.get("goals_for", team_row.get("gf", 0))),
+                                "ga": int(team_row.get("goals_against", team_row.get("ga", 0))),
+                                "gd": int(team_row.get("goal_difference", team_row.get("gd", 0))),
+                                "points": int(team_row.get("points", 0)),
                                 "flag": team_flag
                             })
             if all_teams:
                 display_df = pd.DataFrame(all_teams)
                 is_live = True
     except Exception as api_error:
-        st.error("⚠️ Local server connections failed to receive target API stream.")
+        pass
 
     # Top KPI Cards
     kpi1, kpi2, kpi3, kpi4 = st.columns(4)
