@@ -102,11 +102,10 @@ if st.session_state.current_page == "home":
 elif st.session_state.current_page == "stats":
     st.title("🏆 FIFA World Cup 2026 Standings")
 
-    # Baseline fallback data definition
     display_df = st.session_state.teams_df.copy()
     is_live = False
 
-    # Fully expanded flag library supporting the expanded 48-team roster
+    # Fully expanded 48-team roster flag map library
     FLAG_MAP = {
         "Argentina": "🇦🇷", "Australia": "🇦🇺", "Austria": "🇦🇹", "Belgium": "🇧🇪",
         "Brazil": "🇧🇷", "Cameroon": "🇨🇲", "Canada": "🇨🇦", "Chile": "🇨🇱",
@@ -126,27 +125,29 @@ elif st.session_state.current_page == "stats":
     }
 
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "application/json"
     }
 
-    # Step 1: Isolated lookup fetch (doesn't break the main loop if it hits an API timeout)
+    # Step 1: Fetch metadata names list
     team_lookup = {}
     try:
-        teams_resp = requests.get("https://worldcup26.ir/get/teams", headers=headers, timeout=5)
+        teams_resp = requests.get("https://worldcup26.ir/get/teams", headers=headers, timeout=8)
         if teams_resp.status_code == 200:
             teams_data = teams_resp.json()
             raw_teams_list = teams_data if isinstance(teams_data, list) else teams_data.get("data", [])
             for t in raw_teams_list:
-                t_id = str(t.get("id") or t.get("team_id") or "")
-                t_name = t.get("name_en") or t.get("name")
-                if t_id and t_name:
-                    team_lookup[t_id] = t_name
+                if isinstance(t, dict):
+                    t_id = str(t.get("id") or t.get("team_id") or "")
+                    t_name = t.get("name_en") or t.get("name")
+                    if t_id and t_name:
+                        team_lookup[t_id] = t_name
     except Exception:
-        pass  # Gracefully skip lookup fetching constraints if down
+        pass  # Do not drop into full backup if only lookup has an issue
 
-    # Step 2: Main group standings fetch operation
+    # Step 2: Main Standings processing flow
     try:
-        groups_resp = requests.get("https://worldcup26.ir/get/groups", headers=headers, timeout=6)
+        groups_resp = requests.get("https://worldcup26.ir/get/groups", headers=headers, timeout=8)
         if groups_resp.status_code == 200:
             groups_data = groups_resp.json()
 
@@ -162,12 +163,14 @@ elif st.session_state.current_page == "stats":
             all_teams = []
             for group in raw_groups_list:
                 if isinstance(group, dict):
-                    group_letter = group.get("name", "")
-                    for team in group.get("teams", []):
+                    group_letter = group.get("name", group.get("group", ""))
+                    teams_array = group.get("teams", [])
+
+                    for team in teams_array:
                         if isinstance(team, dict):
                             team_id_str = str(team.get("id") or team.get("team_id") or "")
 
-                            # Fallback chain prioritizing explicit keys before looking up ID indices
+                            # Fallback sequence evaluating direct payload labels, then lookup dictionaries
                             team_name = team.get("name_en") or team.get("name") or team_lookup.get(
                                 team_id_str) or f"Team {team_id_str}"
                             team_flag = FLAG_MAP.get(team_name, "⚽")
@@ -189,8 +192,7 @@ elif st.session_state.current_page == "stats":
                 display_df = pd.DataFrame(all_teams)
                 is_live = True
     except Exception as api_error:
-        st.error("⚠️ The live API connection failed to load successfully.")
-        st.info(f"Detailed Troubleshooting Context: {api_error}")
+        st.error("⚠️ Local server connections failed to receive target API stream.")
 
     # Top KPI Cards
     kpi1, kpi2, kpi3, kpi4 = st.columns(4)
