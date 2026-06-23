@@ -11,33 +11,43 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
-import tkinter as tk
+import streamlit as st
 
-# 1. Create the main application window
-root = tk.Tk()
-root.title("Four Boxes Layout")
-root.geometry("400 x 400")
+st.set_page_config(layout="wide")
+st.title("Streamlit 4 Boxes Layout")
 
-# 2. Configure a 2x2 grid system that stretches evenly
-root.rowconfigure(0, weight=1)
-root.rowconfigure(1, weight=1)
-root.columnconfigure(0, weight=1)
-root.columnconfigure(1, weight=1)
+# Custom CSS to give the boxes a border, padding, and background color
+st.markdown("""
+    <style>
+    .custom-box {
+        background-color: #f0f2f6;
+        padding: 30px;
+        border-radius: 10px;
+        border: 2px solid #4cbd93;
+        text-align: center;
+        margin-bottom: 20px;
+        min-height: 150px;
+    }
+    </style>
+""", unsafe_html=True)
 
-# 3. Create the 4 boxes (Frames) with different colors
-box1 = tk.Frame(root, bg="red", bd=2, relief="solid")
-box2 = tk.Frame(root, bg="blue", bd=2, relief="solid")
-box3 = tk.Frame(root, bg="green", bd=2, relief="solid")
-box4 = tk.Frame(root, bg="yellow", bd=2, relief="solid")
+# Row 1
+row1_col1, row1_col2 = st.columns(2)
 
-# 4. Place the boxes into the grid slots
-box1.grid(row=0, column=0, sticky="nsew")
-box2.grid(row=0, column=1, sticky="nsew")
-box3.grid(row=1, column=0, sticky="nsew")
-box4.grid(row=1, column=1, sticky="nsew")
+with row1_col1:
+    st.markdown('<div class="custom-box"><h3>Box 1</h3><p>Top Left Content</p></div>', unsafe_html=True)
 
-# 5. Start the program
-root.mainloop()
+with row1_col2:
+    st.markdown('<div class="custom-box"><h3>Box 2</h3><p>Top Right Content</p></div>', unsafe_html=True)
+
+# Row 2
+row2_col1, row2_col2 = st.columns(2)
+
+with row2_col1:
+    st.markdown('<div class="custom-box"><h3>Box 3</h3><p>Bottom Left Content</p></div>', unsafe_html=True)
+
+with row2_col2:
+    st.markdown('<div class="custom-box"><h3>Box 4</h3><p>Bottom Right Content</p></div>', unsafe_html=True)
 # ----------------------------------------------------------------------
 # Session State Initialization
 # ----------------------------------------------------------------------
