@@ -155,13 +155,14 @@ elif st.session_state.current_page == "stats":
                             # Match flag dynamically based on dictionary, default to football if missing
                             team_flag = FLAG_MAP.get(team_name, "⚽")
 
+                            # --- UPDATED API KEYS MAPPING ---
                             all_teams.append({
                                 "name": team_name,
                                 "group": group_letter,
-                                "played": int(team.get("played", 0)),
-                                "won": int(team.get("won", 0)),
-                                "drawn": int(team.get("drawn", 0)),
-                                "lost": int(team.get("lost", 0)),
+                                "played": int(team.get("games_played", team.get("played", 0))),
+                                "won": int(team.get("wins", team.get("won", 0))),
+                                "drawn": int(team.get("draws", team.get("drawn", 0))),
+                                "lost": int(team.get("losses", team.get("lost", 0))),
                                 "gf": int(team.get("goals_for", team.get("gf", 0))),
                                 "ga": int(team.get("goals_against", team.get("ga", 0))),
                                 "gd": int(team.get("goal_difference", team.get("gd", 0))),
