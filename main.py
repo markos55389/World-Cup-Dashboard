@@ -45,7 +45,12 @@ if st.session_state.current_page == "home":
     with row1_col1:
         with st.container(border=True):
             st.subheader("Box 1")
-            st.write("Top Left Content")
+            st.write("View individual player performances and top scorers!")
+
+            # 💡 New button to route to player stats page
+            if st.button("Go to Player Stats ➔", type="primary", key="go_to_player_stats"):
+                st.session_state.current_page = "player_stats"
+                st.rerun()
 
     with row1_col2:
         with st.container(border=True):
@@ -146,6 +151,28 @@ elif st.session_state.current_page == "🔍Explorer":
 
     if st.button("🏆 Standings", key="go_to_standings_from_explorer"):
         st.session_state.current_page = "stats"
+        st.rerun()
+
+# --- PAGE 4: PLAYER STATS ---
+elif st.session_state.current_page == "player_stats":
+    st.subheader("⚽ Player Statistics")
+    st.write("Top Scorers and Goal Leaders")
+
+    # Hardcoded mock player data
+    player_data = {
+        "Player": ["Lionel Messi", "Kylian Mbappé", "Luka Modrić", "Neymar Jr"],
+        "Team": ["Argentina", "France", "Croatia", "Brazil"],
+        "Goals": [7, 8, 3, 2],
+        "Assists": [3, 2, 1, 1]
+    }
+    player_df = pd.DataFrame(player_data)
+
+    # Display the player stats
+    st.dataframe(player_df, use_container_width=True, hide_index=True)
+
+    # 💡 Back to Home button with its own unique key and correct indentation
+    if st.button("⬅ Back to Home", key="back_home_from_players"):
+        st.session_state.current_page = "home"
         st.rerun()
 # ----------------------------------------------------------------------
 # Session State Initialization
