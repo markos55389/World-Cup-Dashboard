@@ -106,6 +106,20 @@ elif st.session_state.current_page == "stats":
     display_df = st.session_state.teams_df.copy()
     is_live = False
 
+    # Comprehensive Flag Mapping Dictionary for World Cup Teams
+    FLAG_MAP = {
+        "Argentina": "🇦🇷", "Australia": "🇦🇺", "Austria": "🇦🇹", "Belgium": "🇧🇪",
+        "Brazil": "🇧🇷", "Cameroon": "🇨🇲", "Canada": "🇨🇦", "Chile": "🇨🇱",
+        "Colombia": "🇨🇴", "Costa Rica": "🇨🇷", "Croatia": "🇭🇷", "Denmark": "🇩🇰",
+        "Ecuador": "🇪🇨", "Egypt": "🇪🇬", "England": "🏴󠁧󠁢󠁥󠁮󠁧󠁿", "France": "🇫🇷",
+        "Germany": "🇩🇪", "Ghana": "🇬🇭", "Iran": "🇮🇷", "Italy": "🇮🇹",
+        "Japan": "🇯🇵", "Mexico": "🇲🇽", "Morocco": "🇲🇦", "Netherlands": "🇳🇱",
+        "Peru": "🇵🇪", "Poland": "🇵🇱", "Portugal": "🇵🇹", "Qatar": "🇶🇦",
+        "Saudi Arabia": "🇸🇦", "Senegal": "🇸🇳", "Serbia": "🇷🇸", "South Korea": "🇰🇷",
+        "Spain": "🇪🇸", "Sweden": "🇸🇪", "Switzerland": "🇨🇭", "Tunisia": "🇹🇳",
+        "USA": "🇺🇸", "United States": "🇺🇸", "Uruguay": "🇺🇾", "Wales": "🏴󠁧󠁢󠁷󠁬󠁳󠁿"
+    }
+
     # Live API Connector Attempt
     api_url = "https://worldcup26.ir/get/groups"
     headers = {
@@ -117,18 +131,15 @@ elif st.session_state.current_page == "stats":
         if response.status_code == 200:
             groups_data = response.json()
 
-            # Robust extraction layer: ensure groups_data points to an iterable list of group objects
             raw_groups_list = []
             if isinstance(groups_data, list):
                 raw_groups_list = groups_data
             elif isinstance(groups_data, dict):
-                # Check for standard nested wrapper keys
                 if "data" in groups_data and isinstance(groups_data["data"], list):
                     raw_groups_list = groups_data["data"]
                 elif "groups" in groups_data and isinstance(groups_data["groups"], list):
                     raw_groups_list = groups_data["groups"]
                 else:
-                    # If it's a dictionary of groups structured by key, extract the values
                     raw_groups_list = [v for v in groups_data.values() if isinstance(v, dict)]
 
             all_teams = []
@@ -137,8 +148,14 @@ elif st.session_state.current_page == "stats":
                     group_letter = group.get("name", "")
                     for team in group.get("teams", []):
                         if isinstance(team, dict):
+                            # Extract official name from API
+                            team_name = team.get("name_en", team.get("name", "Unknown Team"))
+
+                            # Match flag dynamically based on dictionary, default to football if missing
+                            team_flag = FLAG_MAP.get(team_name, "⚽")
+
                             all_teams.append({
-                                "name": team.get("name_en", team.get("name", "")),
+                                "name": team_name,
                                 "group": group_letter,
                                 "played": int(team.get("played", 0)),
                                 "won": int(team.get("won", 0)),
@@ -148,7 +165,7 @@ elif st.session_state.current_page == "stats":
                                 "ga": int(team.get("goals_against", team.get("ga", 0))),
                                 "gd": int(team.get("goal_difference", team.get("gd", 0))),
                                 "points": int(team.get("points", 0)),
-                                "flag": "⚽"
+                                "flag": team_flag
                             })
             if all_teams:
                 display_df = pd.DataFrame(all_teams)
@@ -181,6 +198,7 @@ elif st.session_state.current_page == "stats":
         standings[["Pos", "flag", "name", "group", "played", "won", "drawn", "lost", "gf", "ga", "gd", "points"]],
         column_config={
             "Pos": st.column_config.NumberColumn("Pos", width="small"),
+            "flag": st.column_config.TextColumn("Flag", width="small"),
             "name": st.column_config.TextColumn("Team"),
             "group": st.column_config.TextColumn("Group"),
         },
