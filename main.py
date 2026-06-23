@@ -68,7 +68,7 @@ if st.session_state.current_page == "home":
     with row2_col1:
         with st.container(border=True):
             st.subheader("News")
-            st.write("Get the latest news about your favourite teams!")
+            st.write("Get the latest news about all of your favourite teams!")
 
             if st.button("Go to the latest news ➔", type="primary"):
                 st.session_state.current_page = "news"
@@ -185,7 +185,7 @@ elif st.session_state.current_page == "player_stats":
 
 # --- PAGE 5: News ---
 elif st.session_state.current_page == "news":
-    st.subheader("Latest News")
+    st.subheader("📰Latest News")
     st.write("Find the latest news about your team")
 
 
