@@ -321,74 +321,10 @@ col4.metric("Avg Points", round(df["points"].mean(), 1))
 st.divider()
 
 # Tabs
-tab1, tab2, tab3 = st.tabs(["🏆 Standings", "🔍 Team Explorer", "⚔️ Match Simulator"])
+tab1 = st.tabs(["⚔️ Match Simulator"])
 
 # ===================== TAB 1: STANDINGS =====================
 with tab1:
-    st.subheader("Group Stage Standings")
-
-    # Prepare standings table
-    standings = df.sort_values(
-        by=["points", "gd", "gf"],
-        ascending=[False, False, False]
-    ).reset_index(drop=True)
-    standings.insert(0, "Pos", range(1, len(standings) + 1))
-
-    # Display as nice dataframe
-    st.dataframe(
-        standings[["Pos", "flag", "name", "group", "played", "won", "drawn", "lost", "gf", "ga", "gd", "points"]],
-        column_config={
-            "Pos": st.column_config.NumberColumn("Pos", width="small"),
-            "flag": st.column_config.TextColumn(""),
-            "name": st.column_config.TextColumn("Team", width="medium"),
-            "group": st.column_config.TextColumn("Group", width="small"),
-            "gd": st.column_config.NumberColumn("GD", help="Goal Difference"),
-            "points": st.column_config.NumberColumn("Pts", help="Points"),
-        },
-        hide_index=True,
-        use_container_width=True,
-        height=500
-    )
-
-# ===================== TAB 2: TEAM EXPLORER =====================
-with tab2:
-    st.subheader("Team Deep Dive")
-
-    if not df.empty:
-        team_names = df["name"].tolist()
-        selected_team = st.selectbox("Select a team", team_names, index=0)
-
-        team = df[df["name"] == selected_team].iloc[0]
-
-        # Header
-        st.markdown(f"## {team['flag']} {team['name']} — Group {team['group']}")
-
-        # Metrics
-        m1, m2, m3, m4, m5 = st.columns(5)
-        m1.metric("Points", int(team["points"]))
-        m2.metric("Goal Difference", int(team["gd"]))
-        m3.metric("Goals Scored", int(team["gf"]))
-        m4.metric("Goals Conceded", int(team["ga"]))
-        m5.metric("Matches Played", int(team["played"]))
-
-        # W/D/L breakdown
-        st.markdown("### Record")
-        w, d, l = st.columns(3)
-        w.metric("Wins", int(team["won"]))
-        d.metric("Draws", int(team["drawn"]))
-        l.metric("Losses", int(team["lost"]))
-
-        # Simple bar chart
-        chart_data = pd.DataFrame({
-            "Category": ["Goals Scored", "Goals Conceded"],
-            "Goals": [team["gf"], team["ga"]]
-        })
-        st.bar_chart(chart_data.set_index("Category"), use_container_width=True)
-    else:
-        st.warning("No teams match your filters.")
-
-# ===================== TAB 3: MATCH SIMULATOR =====================
-with tab3:
     st.subheader("Match Simulator")
     st.caption("Simulate results and watch the standings update live")
 
