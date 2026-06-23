@@ -215,12 +215,54 @@ elif st.session_state.current_page == "news":
         st.session_state.current_page = "home"
         st.rerun()
 
-# --- PAGE 6: PLAYER STATS ---
+# --- PAGE 6: Competiton ---
 elif st.session_state.current_page == "competition":
     st.subheader("⚽ Competition Whereabouts")
     st.write("Find out where we are in the competition")
 
+    # 1. Create the competition search box
+    comp_search_query = st.text_input(
+        "🔍 Search Team Standings",
+        placeholder="Type team name (e.g., France)...",
+        key="competition_team_search_input"
+    )
 
+    if comp_search_query.strip():
+        # 2. Convert spaces to '+' characters for a clean Google URL query
+        clean_comp_team = comp_search_query.strip().replace(" ", "+")
+
+        # 3. Construct the Google search link for the specific team + tournament
+        comp_google_url = f"https://www.google.com/search?q={clean_comp_team}+world+cup"
+
+        # 4. Display the direct link button
+        st.link_button(
+            label=f"Check {comp_search_query.strip()}'s World Cup progress ➔",
+            url=comp_google_url,
+            type="primary"
+        )
+    # --- QUICK TOURNAMENT LINKS ---
+    st.markdown("### 📅 Quick Schedules & Results")
+
+    # 1. URL-encoded links for upcoming and past fixtures
+    upcoming_games_url = "https://www.google.com/search?q=world+cup+upcoming+games+fixtures"
+    latest_played_url = "https://www.google.com/search?q=world+cup+latest+played+games+results"
+
+    # 2. Display them side-by-side using Streamlit columns
+    link_col1, link_col2 = st.columns(2)
+
+    with link_col1:
+        st.link_button(
+            label="📅 See Upcoming Games",
+            url=upcoming_games_url,
+            use_container_width=True
+        )
+
+    with link_col2:
+        st.link_button(
+            label="⚽ See Latest Played Games",
+            url=latest_played_url,
+            use_container_width=True
+        )
     # 💡 Back to Home button with its own unique key and correct indentation
     if st.button("⬅ Back to Home", key="back_home_from_competition"):
         st.session_state.current_page = "home"
