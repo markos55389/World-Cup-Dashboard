@@ -4,12 +4,18 @@ import random
 
 # Load your World Cup data at the very top of the script
 world_cup_data = {
-    "Country": ["Argentina", "France", "Croatia", "Morocco", "Brazil", "Netherlands"],
-    "Group": ["C", "D", "F", "F", "G", "A"],
-    "points": [9, 9, 5, 7, 6, 7],         # Lowercase 'p'
-    "gf": [15, 16, 8, 6, 8, 10],          # Goals For shortened to 'gf'
-    "gd": [8, 9, 3, 2, 4, 5],             # Added Goal Difference 'gd'
-    "Wins": [4, 4, 2, 3, 2, 2]
+    "Pos": [1, 2, 3, 4, 5, 6],
+    "flag": ["🇦🇷", "🇫🇷", "🇭🇷", "🇲🇦", "🇧🇷", "🇳🇱"],
+    "name": ["Argentina", "France", "Croatia", "Morocco", "Brazil", "Netherlands"],
+    "group": ["C", "D", "F", "F", "G", "A"],
+    "played": [7, 7, 7, 7, 5, 5],
+    "won": [4, 4, 2, 3, 3, 3],
+    "drawn": [2, 1, 4, 2, 1, 2],
+    "lost": [1, 2, 1, 2, 1, 0],
+    "gf": [15, 16, 8, 6, 8, 10],
+    "ga": [8, 7, 7, 5, 3, 4],
+    "gd": [7, 9, 1, 1, 5, 6],
+    "points": [14, 13, 10, 11, 10, 11]
 }
 
 df = pd.DataFrame(world_cup_data)
