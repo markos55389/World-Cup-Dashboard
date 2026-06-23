@@ -17,7 +17,7 @@ st.set_page_config(layout="wide")
 st.title("Streamlit 4 Boxes Layout")
 
 # Custom CSS to give the boxes a border, padding, and background color
-st.markdown("""<style>  .custom-box { background-color: #f0f2f6;  padding: 30px; border-radius: 10px;  border: 2px solid #4cbd93;  text-align: center;  margin-bottom: 20px;  min-height: 150px; } </style> """, unsafe_html=True)
+st.html("<style>.custom-box { background-color: #f0f2f6; padding: 30px; border-radius: 10px; border: 2px solid #4cbd93; text-align: center; margin-bottom: 20px; min-height: 150px; }</style>")
 
 # Row 1
 row1_col1, row1_col2 = st.columns(2)
