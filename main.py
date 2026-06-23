@@ -100,19 +100,55 @@ if st.session_state.current_page == "home":
 # --- PAGE 2: TEAM STATS & STANDINGS ---
 elif st.session_state.current_page == "stats":
     st.title("🏆 FIFA World Cup 2026 Standings")
-    df_filtered = st.session_state.teams_df.copy()
+
+    # Baseline fallback data definition
+    display_df = st.session_state.teams_df.copy()
+    is_live = False
+
+    # Live API Connector Attempt
+    api_url = "https://worldcup26.ir/get/groups"
+    try:
+        response = requests.get(api_url, timeout=6)
+        if response.status_code == 200:
+            groups_data = response.json()
+            all_teams = []
+            for group in groups_data:
+                group_letter = group.get("name", "")
+                for team in group.get("teams", []):
+                    all_teams.append({
+                        "name": team.get("name_en", team.get("name", "")),
+                        "group": group_letter,
+                        "played": int(team.get("played", 0)),
+                        "won": int(team.get("won", 0)),
+                        "drawn": int(team.get("drawn", 0)),
+                        "lost": int(team.get("lost", 0)),
+                        "gf": int(team.get("goals_for", 0)),
+                        "ga": int(team.get("goals_against", 0)),
+                        "gd": int(team.get("goal_difference", 0)),
+                        "points": int(team.get("points", 0)),
+                        "flag": "⚽"
+                    })
+            if all_teams:
+                display_df = pd.DataFrame(all_teams)
+                is_live = True
+    except Exception:
+        pass  # Drop back to standard local dataset cleanly on failure
 
     # Top KPI Cards
     kpi1, kpi2, kpi3, kpi4 = st.columns(4)
-    kpi1.metric("Registered Teams", len(df_filtered))
-    kpi2.metric("Total Goals Scored", int(df_filtered["gf"].sum()))
-    kpi3.metric("Aggregated Matches", int(df_filtered["played"].sum()))
-    kpi4.metric("Avg Points Per Team", round(df_filtered["points"].mean(), 1) if len(df_filtered) > 0 else 0)
+    kpi1.metric("Registered Teams", len(display_df))
+    kpi2.metric("Total Goals Scored", int(display_df["gf"].sum()))
+    kpi3.metric("Aggregated Matches", int(display_df["played"].sum()))
+    kpi4.metric("Avg Points Per Team", round(display_df["points"].mean(), 1) if len(display_df) > 0 else 0)
 
     st.divider()
-    st.subheader("Group Stage Standings Table")
+    if is_live:
+        st.subheader("🔴 Live Group Stage Standings (Fetched from API)")
+    else:
+        st.subheader("📋 Group Stage Standings Table (Offline Backup)")
 
-    standings = df_filtered.sort_values(by=["points", "gd", "gf"], ascending=[False, False, False]).reset_index(
+    # Sort standard format ranking criteria
+    standings = display_df.sort_values(by=["points", "gd", "gf"], ascending=[False, False, False]).reset_index(
         drop=True)
     standings.insert(0, "Pos", range(1, len(standings) + 1))
 
