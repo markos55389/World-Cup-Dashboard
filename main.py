@@ -11,7 +11,33 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+import tkinter as tk
 
+# 1. Create the main application window
+root = tk.Tk()
+root.title("Four Boxes Layout")
+root.geometry("400 x 400")
+
+# 2. Configure a 2x2 grid system that stretches evenly
+root.rowconfigure(0, weight=1)
+root.rowconfigure(1, weight=1)
+root.columnconfigure(0, weight=1)
+root.columnconfigure(1, weight=1)
+
+# 3. Create the 4 boxes (Frames) with different colors
+box1 = tk.Frame(root, bg="red", bd=2, relief="solid")
+box2 = tk.Frame(root, bg="blue", bd=2, relief="solid")
+box3 = tk.Frame(root, bg="green", bd=2, relief="solid")
+box4 = tk.Frame(root, bg="yellow", bd=2, relief="solid")
+
+# 4. Place the boxes into the grid slots
+box1.grid(row=0, column=0, sticky="nsew")
+box2.grid(row=0, column=1, sticky="nsew")
+box3.grid(row=1, column=0, sticky="nsew")
+box4.grid(row=1, column=1, sticky="nsew")
+
+# 5. Start the program
+root.mainloop()
 # ----------------------------------------------------------------------
 # Session State Initialization
 # ----------------------------------------------------------------------
@@ -83,15 +109,15 @@ with st.sidebar:
             submitted = st.form_submit_button("Add Team")
             if submitted and new_name:
                 new_team = pd.DataFrame([{
-                    "name": new_name,
-                    "flag": new_flag,
-                    "group": new_group,
-                    "played": new_played,
-                    "won": new_won,
-                    "drawn": new_drawn,
-                    "lost": new_lost,
-                    "gf": new_gf,
-                    "ga": new_ga
+                    "Name": new_name,
+                    "Flag": new_flag,
+                    "Group": new_group,
+                    "Played": new_played,
+                    "Won": new_won,
+                    "Drawn": new_drawn,
+                    "Lost": new_lost,
+                    "GF": new_gf,
+                    "GA": new_ga
                 }])
                 st.session_state.teams_df = pd.concat(
                     [st.session_state.teams_df, new_team], ignore_index=True
