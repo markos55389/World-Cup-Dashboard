@@ -106,7 +106,7 @@ elif st.session_state.current_page == "stats":
 elif st.session_state.current_page == "🔍Explorer":
          st.subheader("Team Deep Dive")
 
-    if not df.empty:
+        if not df.empty:
              team_names = df["name"].tolist()
              selected_team = st.selectbox("Select a team", team_names, index=0)
 
@@ -136,14 +136,14 @@ elif st.session_state.current_page == "🔍Explorer":
                  "Goals": [team["gf"], team["ga"]]
              })
              st.bar_chart(chart_data.set_index("Category"), use_container_width=True)
-    else:
+        else:
              st.warning("No teams match your filters.")
-    if st.button("⬅ Back to Home", key="back_home_from_explorer"):
-        st.session_state.current_page = "home"
-        st.rerun()
-    if st.button("🏆 Standings", key="go_to_standings_from_explorer"):
-        st.session_state.current_page = "stats"
-        st.rerun()
+        if st.button("⬅ Back to Home", key="back_home_from_explorer"):
+            st.session_state.current_page = "home"
+            st.rerun()
+        if st.button("🏆 Standings", key="go_to_standings_from_explorer"):
+            st.session_state.current_page = "stats"
+            st.rerun()
 # ----------------------------------------------------------------------
 # Session State Initialization
 # ----------------------------------------------------------------------
