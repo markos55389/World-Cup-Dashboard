@@ -54,6 +54,7 @@ def update_standings():
 if st.session_state.current_page == "home":
     st.title("World Cup 2026")
 
+    # Top Row: Player Stats & Team Standings
     row1_col1, row1_col2 = st.columns(2)
     with row1_col1:
         with st.container(border=True):
@@ -70,6 +71,7 @@ if st.session_state.current_page == "home":
                 st.session_state.current_page = "stats"
                 st.rerun()
 
+    # Middle Full-Width Row: Match Simulator
     st.markdown("---")
     with st.container(border=True):
         st.subheader("⚔️ Match Simulator")
@@ -79,6 +81,7 @@ if st.session_state.current_page == "home":
             st.rerun()
     st.markdown("---")
 
+    # Bottom Row: News & Competition Locations
     row2_col1, row2_col2 = st.columns(2)
     with row2_col1:
         with st.container(border=True):
@@ -99,6 +102,7 @@ if st.session_state.current_page == "home":
 elif st.session_state.current_page == "stats":
     st.title("🏆 FIFA World Cup 2026 Standings")
 
+    # Baseline fallback data definition
     display_df = st.session_state.teams_df.copy()
     is_live = False
 
@@ -116,80 +120,62 @@ elif st.session_state.current_page == "stats":
         "USA": "🇺🇸", "United States": "🇺🇸", "Uruguay": "🇺🇾", "Wales": "🏴󠁧󠁢󠁷󠁬󠁳󠁿"
     }
 
-    # Browser imitation headers to prevent standard API blocks
+    # Live API Connector Attempt
+    api_url = "https://worldcup26.ir/get/groups"
     headers = {
-        "Accept": "application/json",
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     }
 
     try:
-        # Load structural team metadata details
-        teams_resp = requests.get("https://worldcup26.ir/get/teams", headers=headers, timeout=8)
-        groups_resp = requests.get("https://worldcup26.ir/get/groups", headers=headers, timeout=8)
+        response = requests.get(api_url, headers=headers, timeout=6)
+        if response.status_code == 200:
+            groups_data = response.json()
 
-        if teams_resp.status_code == 200 and groups_resp.status_code == 200:
-            teams_payload = teams_resp.json()
-            groups_payload = groups_resp.json()
-
-            # Normalize structural wrapper definitions from the JSON endpoints
-            teams_list = teams_payload.get("data", teams_payload) if isinstance(teams_payload, dict) else teams_payload
-            groups_list = groups_payload.get("data", groups_payload) if isinstance(groups_payload,
-                                                                                   dict) else groups_payload
-
-            # Build metadata lookup map
-            meta_lookup = {}
-            if isinstance(teams_list, list):
-                for t in teams_list:
-                    if isinstance(t, dict):
-                        tid = str(t.get("id") or t.get("team_id") or "")
-                        meta_lookup[tid] = {
-                            "name": t.get("name_en") or t.get("name") or "Unknown Team",
-                            "flag": t.get("flag") or t.get("emoji") or FLAG_MAP.get(t.get("name_en"), "⚽")
-                        }
+            raw_groups_list = []
+            if isinstance(groups_data, list):
+                raw_groups_list = groups_data
+            elif isinstance(groups_data, dict):
+                if "data" in groups_data and isinstance(groups_data["data"], list):
+                    raw_groups_list = groups_data["data"]
+                elif "groups" in groups_data and isinstance(groups_data["groups"], list):
+                    raw_groups_list = groups_data["groups"]
+                else:
+                    raw_groups_list = [v for v in groups_data.values() if isinstance(v, dict)]
 
             all_teams = []
-            if isinstance(groups_list, list):
-                for group_obj in groups_list:
-                    if isinstance(group_obj, dict):
-                        group_letter = group_obj.get("group") or group_obj.get("name") or "G"
-                        teams_array = group_obj.get("teams", [])
+            for group in raw_groups_list:
+                if isinstance(group, dict):
+                    group_letter = group.get("name", "")
+                    for team in group.get("teams", []):
+                        if isinstance(team, dict):
+                            # Adaptive name resolver step
+                            team_name = team.get("name_en") or team.get(
+                                "name") or f"Team ID: {team.get('team_id', 'Unknown')}"
 
-                        for idx, item in enumerate(teams_array):
-                            if isinstance(item, dict):
-                                target_id = str(item.get("team_id") or item.get("id") or "")
-                                meta = meta_lookup.get(target_id, {"name": f"Team {target_id}", "flag": "⚽"})
+                            # Match flag dynamically based on dictionary, default to football if missing
+                            team_flag = FLAG_MAP.get(team_name, "⚽")
 
-                                # Read API values directly
-                                points = int(item.get("pts") or item.get("points") or 0)
-                                gf = int(item.get("gf") or item.get("goals_for") or 0)
-                                ga = int(item.get("ga") or item.get("goals_against") or 0)
-
-                                # Calculate missing variables directly from available metrics
-                                won = points // 3
-                                drawn = points % 3
-                                played = int(item.get("played") or (won + drawn))
-                                lost = max(0, played - (won + drawn))
-
-                                all_teams.append({
-                                    "name": meta["name"],
-                                    "group": group_letter,
-                                    "played": played,
-                                    "won": won,
-                                    "drawn": drawn,
-                                    "lost": lost,
-                                    "gf": gf,
-                                    "ga": ga,
-                                    "gd": gf - ga,
-                                    "points": points,
-                                    "flag": meta["flag"]
-                                })
-
+                            all_teams.append({
+                                "name": team_name,
+                                "group": group_letter,
+                                "played": int(team.get("played", 0)),
+                                "won": int(team.get("won", 0)),
+                                "drawn": int(team.get("drawn", 0)),
+                                "lost": int(team.get("lost", 0)),
+                                "gf": int(team.get("goals_for", team.get("gf", 0))),
+                                "ga": int(team.get("goals_against", team.get("ga", 0))),
+                                "gd": int(team.get("goal_difference", team.get("gd", 0))),
+                                "points": int(team.get("points", 0)),
+                                "flag": team_flag
+                            })
             if all_teams:
                 display_df = pd.DataFrame(all_teams)
                 is_live = True
-
-    except Exception as api_err:
-        pass  # Silently defaults to session state data if the local networking drops
+        else:
+            st.error(f"⚠️ API responded with bad HTTP code: {response.status_code}")
+    except Exception as api_error:
+        st.error("⚠️ The live API connection failed to load successfully.")
+        st.info(f"Detailed Troubleshooting Context: {api_error}")
 
     # Top KPI Cards
     kpi1, kpi2, kpi3, kpi4 = st.columns(4)
@@ -204,7 +190,7 @@ elif st.session_state.current_page == "stats":
     else:
         st.subheader("📋 Group Stage Standings Table (Offline Backup)")
 
-    # Sort rankings safely
+    # Sort standard format ranking criteria
     standings = display_df.sort_values(by=["points", "gd", "gf"], ascending=[False, False, False]).reset_index(
         drop=True)
     standings.insert(0, "Pos", range(1, len(standings) + 1))
