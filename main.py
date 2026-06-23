@@ -321,9 +321,10 @@ col4.metric("Avg Points", round(df["points"].mean(), 1))
 st.divider()
 
 # Tabs
-tab1 = st.tabs(["⚔️ Match Simulator"])
+# 💡 Added a comma after tab1 to properly unpack the single-item list!
+tab1, = st.tabs(["⚔️ Match Simulator"])
 
-# ===================== TAB 1: STANDINGS =====================
+# ===================== TAB 1: MATCH SIMULATOR =====================
 with tab1:
     st.subheader("Match Simulator")
     st.caption("Simulate results and watch the standings update live")
