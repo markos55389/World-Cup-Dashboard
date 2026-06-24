@@ -350,7 +350,7 @@ elif st.session_state.current_page == "player_stats":
     BASE_URL = "https://v3.football.api-sports.io"
 
     headers = {
-        "x-apisports-key": "YOUR_API_KEY_HERE",  # For direct api-sports
+        "x-apisports-key": "c4135b8921d0dc680b08338fc8a84bb9",  # For direct api-sports
         # If using RapidAPI, use these headers instead:
         # "X-RapidAPI-Key": "YOUR_RAPIDAPI_KEY",
         # "X-RapidAPI-Host": "api-football-v1.p.rapidapi.com"
