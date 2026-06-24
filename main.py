@@ -398,7 +398,7 @@ elif st.session_state.current_page == "player_stats":
                         "Assists Made": assists
                     }
 
-        # Convert to DataFrame
+        # Convert to DataFrame and render
         if player_metrics:
             df_display = pd.DataFrame(player_metrics.values())
             df_display = df_display.sort_values(by=["Goals Scored", "Assists Made"], ascending=False)
@@ -408,7 +408,8 @@ elif st.session_state.current_page == "player_stats":
 
     except Exception as e:
         st.error(f"Could not reach endpoint safely: {e}")
-    st.dataframe(pd.DataFrame(player_data), use_container_width=True, hide_index=True)
+
+    # FIXED: Extraneous 'player_data' rendering line removed from here!
 
     if st.button("⬅ Back to Home", key="back_home_from_players"):
         st.session_state.current_page = "home"
