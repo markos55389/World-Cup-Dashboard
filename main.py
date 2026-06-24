@@ -132,52 +132,33 @@ elif st.session_state.current_page == "stats":
         "User-Agent": "Mozilla/5.0"
     }
 
+
     def normalize_team(team):
-        """Safely extract team fields across different API schemas"""
         return {
-            "name": team.get("name_en")
-                    or team.get("name")
-                    or team.get("team")
-                    or team.get("country")
-                    or "Unknown Team",
+            "name": (
+                team.get("name_en")
+                or team.get("name")
+                or team.get("team_name")
+                or team.get("country")
+                or team.get("title")
+                or list(team.values())[0] if isinstance(team, dict) and len(team) > 0 else "Unknown"
+            ),
 
-            "group": team.get("group")
-                     or team.get("group_name")
-                     or team.get("group_letter")
-                     or "?",
+            "group": (
+                    team.get("group")
+                    or team.get("group_name")
+                    or team.get("group_letter")
+                    or "?"
+            ),
 
-            "played": int(team.get("mp")
-                          or team.get("played")
-                          or team.get("matches_played")
-                          or 0),
-
-            "won": int(team.get("w")
-                       or team.get("wins")
-                       or 0),
-
-            "drawn": int(team.get("d")
-                         or team.get("draws")
-                         or 0),
-
-            "lost": int(team.get("l")
-                        or team.get("losses")
-                        or 0),
-
-            "gf": int(team.get("gf")
-                      or team.get("goals_for")
-                      or 0),
-
-            "ga": int(team.get("ga")
-                      or team.get("goals_against")
-                      or 0),
-
-            "gd": int(team.get("gd")
-                      or team.get("goal_difference")
-                      or (int(team.get("gf", 0)) - int(team.get("ga", 0)))),
-
-            "points": int(team.get("pts")
-                          or team.get("points")
-                          or 0)
+            "played": int(team.get("played") or team.get("mp") or 0),
+            "won": int(team.get("won") or team.get("w") or 0),
+            "drawn": int(team.get("drawn") or team.get("d") or 0),
+            "lost": int(team.get("lost") or team.get("l") or 0),
+            "gf": int(team.get("gf") or team.get("goals_for") or 0),
+            "ga": int(team.get("ga") or team.get("goals_against") or 0),
+            "gd": int(team.get("gd") or (team.get("gf", 0) - team.get("ga", 0))),
+            "points": int(team.get("points") or team.get("pts") or 0)
         }
 
 
