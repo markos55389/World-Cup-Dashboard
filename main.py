@@ -210,7 +210,8 @@ elif st.session_state.current_page == "stats":
                     group_name = group.get("group") or group.get("name") or "?"
 
                     teams = group.get("teams") or group.get("team") or []
-
+                    st.write("GROUP:", group)
+                    st.write("TEAMS:", teams)
                     if isinstance(teams, dict):
                         teams = teams.values()
 
