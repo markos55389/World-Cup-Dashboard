@@ -99,7 +99,6 @@ if st.session_state.current_page == "home":
                 st.rerun()
 
 # --- PAGE 2: TEAM STATS & STANDINGS ---
-# --- PAGE 2: TEAM STATS & STANDINGS ---
 elif st.session_state.current_page == "stats":
     st.title("🏆 FIFA World Cup 2026 Standings")
 
@@ -129,6 +128,34 @@ elif st.session_state.current_page == "stats":
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     }
+    BASE = "https://worldcup26.ir/get"
+
+    @st.cache_data(ttl=3600)  # fetch once, reuse on every rerun
+    def get_team_lookup():
+        data = requests.get(f"{BASE}/teams").json()
+        if isinstance(data, dict):
+            data = data.get("data") or data.get("teams") or []
+        lookup = {}
+        for t in data:
+            tid = t.get("_id") or t.get("id")
+            name = t.get("name") or t.get("country")
+            if tid:
+                lookup[str(tid)] = name
+        return lookup
+
+
+    lookup = get_team_lookup()
+
+    standings = requests.get(f"{BASE}/groups").json()
+    if isinstance(standings, dict):
+        standings = standings.get("data") or standings.get("groups") or []
+
+    for row in standings:
+        team_ref = row.get("team") or row.get("team_id") or row.get("teamId")
+        if isinstance(team_ref, dict):
+            row["team_name"] = team_ref.get("name")
+        else:
+            row["team_name"] = lookup.get(str(team_ref), "Unknown")
 
     try:
         response = requests.get(api_url, headers=headers, timeout=6)
