@@ -132,6 +132,8 @@ elif st.session_state.current_page == "stats":
         "User-Agent": "Mozilla/5.0"
     }
 
+    standings = standings.sort_values("points", ascending=False).reset_index(drop=True)
+    standings["Pos"] = standings.index + 1
 
     def normalize_team(team):
         """Safely extract team fields across different API schemas"""
