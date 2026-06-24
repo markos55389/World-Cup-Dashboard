@@ -4,7 +4,7 @@ import random
 import requests
 
 # ----------------------------------------------------------------------
-# 1. Page Configuration
+# 1. Page Configuration (MUST be first call, only once)
 # ----------------------------------------------------------------------
 st.set_page_config(
     page_title="FIFA World Cup 2026",
@@ -19,12 +19,16 @@ if "teams_df" not in st.session_state:
     initial_data = [
         {"name": "Brazil", "flag": "🇧🇷", "group": "A", "played": 3, "won": 2, "drawn": 1, "lost": 0, "gf": 8, "ga": 3},
         {"name": "France", "flag": "🇫🇷", "group": "B", "played": 3, "won": 2, "drawn": 0, "lost": 1, "gf": 7, "ga": 4},
-        {"name": "Argentina", "flag": "🇦🇷", "group": "C", "played": 3, "won": 3, "drawn": 0, "lost": 0, "gf": 9, "ga": 2},
-        {"name": "England", "flag": "🏴󠁧󠁢󠁥󠁮󠁧󠁿", "group": "D", "played": 3, "won": 2, "drawn": 1, "lost": 0, "gf": 6, "ga": 2},
+        {"name": "Argentina", "flag": "🇦🇷", "group": "C", "played": 3, "won": 3, "drawn": 0, "lost": 0, "gf": 9,
+         "ga": 2},
+        {"name": "England", "flag": "🏴󠁧󠁢󠁥󠁮󠁧󠁿", "group": "D", "played": 3, "won": 2, "drawn": 1, "lost": 0, "gf": 6,
+         "ga": 2},
         {"name": "Spain", "flag": "🇪🇸", "group": "E", "played": 3, "won": 1, "drawn": 2, "lost": 0, "gf": 5, "ga": 3},
         {"name": "Germany", "flag": "🇩🇪", "group": "A", "played": 3, "won": 1, "drawn": 1, "lost": 1, "gf": 5, "ga": 4},
-        {"name": "Portugal", "flag": "🇵🇹", "group": "B", "played": 3, "won": 2, "drawn": 0, "lost": 1, "gf": 6, "ga": 3},
-        {"name": "Netherlands", "flag": "🇳🇱", "group": "C", "played": 3, "won": 1, "drawn": 1, "lost": 1, "gf": 4, "ga": 4},
+        {"name": "Portugal", "flag": "🇵🇹", "group": "B", "played": 3, "won": 2, "drawn": 0, "lost": 1, "gf": 6,
+         "ga": 3},
+        {"name": "Netherlands", "flag": "🇳🇱", "group": "C", "played": 3, "won": 1, "drawn": 1, "lost": 1, "gf": 4,
+         "ga": 4},
     ]
     df_init = pd.DataFrame(initial_data)
     df_init["gd"] = df_init["gf"] - df_init["ga"]
@@ -36,113 +40,185 @@ if "current_page" not in st.session_state:
 
 
 def update_standings():
-    df = st.session_state.teams_df
-    df["gd"] = df["gf"] - df["ga"]
-    df["points"] = df["won"] * 3 + df["drawn"]
-    st.session_state.teams_df = df
+    df_temp = st.session_state.teams_df
+    df_temp["gd"] = df_temp["gf"] - df_temp["ga"]
+    df_temp["points"] = df_temp["won"] * 3 + df_temp["drawn"]
+    st.session_state.teams_df = df_temp
 
 
 # ----------------------------------------------------------------------
-# 3. HOME PAGE
+# 3. PAGE NAVIGATION ROUTER
 # ----------------------------------------------------------------------
+
+# --- PAGE 1: HOME ---
 if st.session_state.current_page == "home":
     st.title("World Cup 2026")
 
-    col1, col2 = st.columns(2)
+    # Top Row: Player Stats & Team Standings
+    row1_col1, row1_col2 = st.columns(2)
+    with row1_col1:
+        with st.container(border=True):
+            st.subheader("Player Stats")
+            st.write("View individual player performances and top scorers!")
+            if st.button("Go to Player Stats ➔", type="primary", key="btn_p_stats"):
+                st.session_state.current_page = "player_stats"
+                st.rerun()
+    with row1_col2:
+        with st.container(border=True):
+            st.subheader("Team Standings")
+            st.write("View detailed group stage metrics and team ranks!")
+            if st.button("Go to World Cup Standings ➔", type="primary", key="btn_t_stats"):
+                st.session_state.current_page = "stats"
+                st.rerun()
 
-    with col1:
-        if st.button("Team Stats"):
-            st.session_state.current_page = "stats"
-            st.rerun()
-
-    with col2:
-        if st.button("Match Simulator"):
+    # Middle Full-Width Row: Match Simulator
+    st.markdown("---")
+    with st.container(border=True):
+        st.subheader("⚔️ Match Simulator")
+        st.write("Predict match outcomes, run random simulations, and calculate updated table dynamics live!")
+        if st.button("Launch Simulator Engine ➔", type="primary", key="btn_simulator_page"):
             st.session_state.current_page = "simulator"
             st.rerun()
+    st.markdown("---")
 
+    # Bottom Row: News & Competition Locations
+    row2_col1, row2_col2 = st.columns(2)
+    with row2_col1:
+        with st.container(border=True):
+            st.subheader("News")
+            st.write("Get the latest updates about your favorite teams!")
+            if st.button("Go to the latest news ➔", type="primary", key="btn_news"):
+                st.session_state.current_page = "news"
+                st.rerun()
+    with row2_col2:
+        with st.container(border=True):
+            st.subheader("Competition")
+            st.write("Track current tournament locations and standings!")
+            if st.button("Find out where we are ➔", type="primary", key="btn_comp"):
+                st.session_state.current_page = "competition"
+                st.rerun()
 
-# ----------------------------------------------------------------------
-# 4. STATS PAGE (FIXED API)
-# ----------------------------------------------------------------------
+# --- PAGE 2: TEAM STATS & STANDINGS ---
+# --- PAGE 2: TEAM STATS & STANDINGS ---
 elif st.session_state.current_page == "stats":
-    st.title("🏆 Standings")
+    st.title("🏆 FIFA World Cup 2026 Standings")
 
+    # Baseline fallback data definition
     display_df = st.session_state.teams_df.copy()
     is_live = False
 
-    api_url = "https://worldcup26.ir/get/groups"
-    headers = {"User-Agent": "Mozilla/5.0"}
+    # Comprehensive Flag Mapping Dictionary for World Cup Teams
+    FLAG_MAP = {
+        "Argentina": "🇦🇷", "Australia": "🇦🇺", "Austria": "🇦🇹", "Belgium": "🇧🇪",
+        "Brazil": "🇧🇷", "Cameroon": "🇨🇲", "Canada": "🇨🇦", "Chile": "🇨🇱",
+        "Colombia": "🇨🇴", "Costa Rica": "🇨🇷", "Croatia": "🇭🇷", "Denmark": "🇩🇰",
+        "Ecuador": "🇪🇨", "Egypt": "🇪🇬", "England": "🏴󠁧󠁢󠁥󠁮󠁧󠁿", "France": "🇫🇷",
+        "Germany": "🇩🇪", "Ghana": "🇬🇭", "Iran": "🇮🇷", "Italy": "🇮🇹",
+        "Japan": "🇯🇵", "Mexico": "🇲🇽", "Morocco": "🇲🇦", "Netherlands": "🇳🇱",
+        "Peru": "🇵🇪", "Poland": "🇵🇱", "Portugal": "🇵🇹", "Qatar": "🇶🇦",
+        "Saudi Arabia": "🇸🇦", "Senegal": "🇸🇳", "Serbia": "🇷🇸", "South Korea": "🇰🇷",
+        "Spain": "🇪🇸", "Sweden": "🇸🇪", "Switzerland": "🇨🇭", "Tunisia": "🇹🇳",
+        "USA": "🇺🇸", "United States": "🇺🇸", "Uruguay": "🇺🇾", "Wales": "🏴󠁧󠁢󠁷󠁬󠁳󠁿"
+    }
 
-    def normalize(team):
-        return {
-            "name": team.get("name_en") or team.get("name") or "Unknown",
-            "played": int(team.get("mp") or team.get("played") or 0),
-            "won": int(team.get("w") or team.get("wins") or 0),
-            "drawn": int(team.get("d") or team.get("draws") or 0),
-            "lost": int(team.get("l") or team.get("losses") or 0),
-            "gf": int(team.get("gf") or 0),
-            "ga": int(team.get("ga") or 0),
-            "points": int(team.get("pts") or team.get("points") or 0),
-            "group": team.get("group") or "?"
-        }
+    # Live API Connector Attempt
+    api_url = "https://worldcup26.ir/get/groups"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    }
 
     try:
-        response = requests.get(api_url, headers=headers, timeout=10)
-        st.write("API Status:", response.status_code)
-
+        response = requests.get(api_url, headers=headers, timeout=6)
         if response.status_code == 200:
-            data = response.json()
+            groups_data = response.json()
 
-            groups = []
-            if isinstance(data, list):
-                groups = data
-            elif isinstance(data, dict):
-                groups = data.get("data") or data.get("groups") or data.get("response") or []
+            raw_groups_list = []
+            if isinstance(groups_data, list):
+                raw_groups_list = groups_data
+            elif isinstance(groups_data, dict):
+                if "data" in groups_data and isinstance(groups_data["data"], list):
+                    raw_groups_list = groups_data["data"]
+                elif "groups" in groups_data and isinstance(groups_data["groups"], list):
+                    raw_groups_list = groups_data["groups"]
+                else:
+                    raw_groups_list = [v for v in groups_data.values() if isinstance(v, dict)]
 
             all_teams = []
-
-            for group in groups:
+            for group in raw_groups_list:
                 if isinstance(group, dict):
-                    group_name = group.get("group") or group.get("name") or "?"
+                    group_letter = group.get("group") or group.get("name", "")
+                    for team in group.get("teams", []):
+                        if isinstance(team, dict):
+                            # Adaptive name resolver step
+                            team_name = team.get("name_en") or team.get("name") or f"Team ID: {team.get('name', '')}"
 
-                    teams = group.get("teams") or []
-                    if isinstance(teams, dict):
-                        teams = teams.values()
+                            # Match flag dynamically based on dictionary, default to football if missing
+                            team_flag = FLAG_MAP.get(team_name, "⚽")
 
-                    for t in teams:
-                        if isinstance(t, dict):
-                            nt = normalize(t)
-                            nt["group"] = group_name
-                            all_teams.append(nt)
-
+                            # --- EXACT API SCHEMA DICTIONARY CORRECTION ---
+                            all_teams.append({
+                                "name": team_name,
+                                "group": group_letter,
+                                "played": int(team.get("mp", team.get("played", 0))),
+                                "won": int(team.get("w", team.get("won", 0))),
+                                "drawn": int(team.get("d", team.get("drawn", 0))),
+                                "lost": int(team.get("l", team.get("lost", 0))),
+                                "gf": int(team.get("gf", 0)),
+                                "ga": int(team.get("ga", 0)),
+                                "gd": int(team.get("gd", team.get("goal_difference", 0))),
+                                "points": int(team.get("pts", team.get("points", 0))),
+                                "flag": team_flag
+                            })
             if all_teams:
                 display_df = pd.DataFrame(all_teams)
                 is_live = True
-                st.success(f"Live API loaded: {len(all_teams)} teams")
-            else:
-                st.warning("API returned data but no teams parsed")
-
         else:
-            st.error("API request failed")
+            st.error(f"⚠️ API responded with bad HTTP code: {response.status_code}")
+    except Exception as api_error:
+        st.error("⚠️ The live API connection failed to load successfully.")
+        st.info(f"Detailed Troubleshooting Context: {api_error}")
 
-    except Exception as e:
-        st.error("API connection failed")
-        st.exception(e)
+    # Top KPI Cards
+    kpi1, kpi2, kpi3, kpi4 = st.columns(4)
+    kpi1.metric("Registered Teams", len(display_df))
+    kpi2.metric("Total Goals Scored", int(display_df["gf"].sum()))
+    kpi3.metric("Aggregated Matches", int(display_df["played"].sum()))
+    kpi4.metric("Avg Points Per Team", round(display_df["points"].mean(), 1) if len(display_df) > 0 else 0)
 
-    # ---------------- UI ----------------
-    standings = display_df.sort_values(
-        by=["points", "gf", "gd"],
-        ascending=[False, False, False]
-    )
+    st.divider()
+    if is_live:
+        st.subheader("🔴 Live Group Stage Standings (Fetched from API)")
+    else:
+        st.subheader("📋 Group Stage Standings Table (Offline Backup)")
 
+    # Sort standard format ranking criteria
+    standings = display_df.sort_values(by=["points", "gd", "gf"], ascending=[False, False, False]).reset_index(
+        drop=True)
     standings.insert(0, "Pos", range(1, len(standings) + 1))
 
-    st.dataframe(standings)
+    st.dataframe(
+        standings[["Pos", "flag", "name", "group", "played", "won", "drawn", "lost", "gf", "ga", "gd", "points"]],
+        column_config={
+            "Pos": st.column_config.NumberColumn("Pos", width="small"),
+            "flag": st.column_config.TextColumn("Flag", width="small"),
+            "name": st.column_config.TextColumn("Team"),
+            "group": st.column_config.TextColumn("Group"),
+        },
+        hide_index=True,
+        use_container_width=True,
+        height=400
+    )
 
-
-    if st.button("Back"):
-        st.session_state.current_page = "home"
-        st.rerun()
+    st.divider()
+    b1, b2 = st.columns(2)
+    with b1:
+        if st.button("⬅ Back to Home", key="back_home_from_stats", use_container_width=True):
+            st.session_state.current_page = "home"
+            st.rerun()
+    with b2:
+        if st.button("🔍 Team Deep Dive Explorer", key="go_to_explorer_from_stats", use_container_width=True):
+            st.session_state.current_page = "🔍Explorer"
+            st.rerun()
 
 # --- NEW PAGE: MATCH SIMULATOR SECTION ---
 elif st.session_state.current_page == "simulator":
