@@ -132,15 +132,17 @@ elif st.session_state.current_page == "stats":
         "User-Agent": "Mozilla/5.0"
     }
 
+    st.write(list(teams)[:3])
 
     def normalize_team(team):
         return {
             "name": (
-                 team.get("name_en")
-                 or team.get("name")
+                 team.get("name")
                  or team.get("team")
                  or team.get("country")
-                 or team.get("team_name")
+                 or team.get("title")
+                 or (team.get("team", {}).get("name") if isinstance(team.get("team"), dict) else None)
+                 or (team.get("country", {}).get("name") if isinstance(team.get("country"), dict) else None)
                  or "Unknown Team"
             ),
 
@@ -168,7 +170,7 @@ elif st.session_state.current_page == "stats":
 
         if response.status_code == 200:
             data = response.json()
-
+            st.write("RAW API DATA:", data)
             # -----------------------------
             # STEP 1: FIND GROUP LIST
             # -----------------------------
@@ -216,9 +218,8 @@ elif st.session_state.current_page == "stats":
                         if not isinstance(team, dict):
                             continue
 
-                        # 🔴 ADD THIS FILTER HERE
-                        if not any(isinstance(v, str) for v in team.values()):
-                            continue
+                        st.write("TEAM KEYS:", team.keys())
+                        st.write("TEAM VALUE SAMPLE:", team)
 
                         t = normalize_team(team)
                         t["name"] = str(t["name"])
