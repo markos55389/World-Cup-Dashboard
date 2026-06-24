@@ -102,8 +102,6 @@ if st.session_state.current_page == "home":
 elif st.session_state.current_page == "stats":
     st.title("🏆 FIFA World Cup 2026 Standings")
 
-    st.json(requests.get("https://worldcup26.ir/get/teams").json())
-    st.json(requests.get("https://worldcup26.ir/get/groups").json())
 
     # Baseline fallback data definition
     display_df = st.session_state.teams_df.copy()
