@@ -122,6 +122,10 @@ elif st.session_state.current_page == "stats":
     }
 
     # Live API Connector Attempt
+    # ----------------------------------------------------------------------
+    # Live API Connector (ROBUST FIXED VERSION)
+    # ----------------------------------------------------------------------
+
     api_url = "https://worldcup26.ir/get/groups"
 
     headers = {
@@ -129,20 +133,54 @@ elif st.session_state.current_page == "stats":
     }
 
 
-    def normalize(team):
-        name = team.get("name_en") or team.get("name") or "Unknown"
-
+    def normalize_team(team):
+        """Safely extract team fields across different API schemas"""
         return {
-            "name": name,
-            "flag": FLAG_MAP.get(name, "⚽"),  # ✅ FIXED
-            "played": int(team.get("mp") or team.get("played") or 0),
-            "won": int(team.get("w") or team.get("wins") or 0),
-            "drawn": int(team.get("d") or team.get("draws") or 0),
-            "lost": int(team.get("l") or team.get("losses") or 0),
-            "gf": int(team.get("gf") or 0),
-            "ga": int(team.get("ga") or 0),
-            "group": team.get("group") or "?"
+            "name": team.get("name_en")
+                    or team.get("name")
+                    or team.get("team")
+                    or team.get("country")
+                    or "Unknown Team",
+
+            "group": team.get("group")
+                     or team.get("group_name")
+                     or team.get("group_letter")
+                     or "?",
+
+            "played": int(team.get("mp")
+                          or team.get("played")
+                          or team.get("matches_played")
+                          or 0),
+
+            "won": int(team.get("w")
+                       or team.get("wins")
+                       or 0),
+
+            "drawn": int(team.get("d")
+                         or team.get("draws")
+                         or 0),
+
+            "lost": int(team.get("l")
+                        or team.get("losses")
+                        or 0),
+
+            "gf": int(team.get("gf")
+                      or team.get("goals_for")
+                      or 0),
+
+            "ga": int(team.get("ga")
+                      or team.get("goals_against")
+                      or 0),
+
+            "gd": int(team.get("gd")
+                      or team.get("goal_difference")
+                      or (int(team.get("gf", 0)) - int(team.get("ga", 0)))),
+
+            "points": int(team.get("pts")
+                          or team.get("points")
+                          or 0)
         }
+
 
     try:
         response = requests.get(api_url, headers=headers, timeout=10)
