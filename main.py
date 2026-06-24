@@ -136,12 +136,12 @@ elif st.session_state.current_page == "stats":
     def normalize_team(team):
         return {
             "name": (
-                team.get("name_en")
-                or team.get("name")
-                or team.get("team_name")
-                or team.get("country")
-                or team.get("title")
-                or list(team.values())[0] if isinstance(team, dict) and len(team) > 0 else "Unknown"
+                 team.get("name_en")
+                 or team.get("name")
+                 or team.get("team")
+                 or team.get("country")
+                 or team.get("team_name")
+                 or "Unknown Team"
             ),
 
             "group": (
@@ -160,7 +160,6 @@ elif st.session_state.current_page == "stats":
             "gd": int(team.get("gd") or (team.get("gf", 0) - team.get("ga", 0))),
             "points": int(team.get("points") or team.get("pts") or 0)
         }
-
 
     try:
         response = requests.get(api_url, headers=headers, timeout=10)
@@ -214,10 +213,17 @@ elif st.session_state.current_page == "stats":
                         teams = teams.values()
 
                     for team in teams:
-                        if isinstance(team, dict):
-                            t = normalize_team(team)
-                            t["group"] = group_name
-                            all_teams.append(t)
+                        if not isinstance(team, dict):
+                            continue
+
+                        # 🔴 ADD THIS FILTER HERE
+                        if not any(isinstance(v, str) for v in team.values()):
+                            continue
+
+                        t = normalize_team(team)
+                        t["name"] = str(t["name"])
+                        t["group"] = group_name
+                        all_teams.append(t)
 
             # -----------------------------
             # STEP 3: APPLY DATA
