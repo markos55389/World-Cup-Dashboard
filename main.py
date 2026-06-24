@@ -123,60 +123,134 @@ elif st.session_state.current_page == "stats":
 
     # Live API Connector Attempt
     api_url = "https://worldcup26.ir/get/groups"
+
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        "User-Agent": "Mozilla/5.0"
     }
 
+
+    def normalize_team(team):
+        """Safely extract team fields across different API schemas"""
+        return {
+            "name": team.get("name_en")
+                    or team.get("name")
+                    or team.get("team")
+                    or team.get("country")
+                    or "Unknown Team",
+
+            "group": team.get("group")
+                     or team.get("group_name")
+                     or team.get("group_letter")
+                     or "?",
+
+            "played": int(team.get("mp")
+                          or team.get("played")
+                          or team.get("matches_played")
+                          or 0),
+
+            "won": int(team.get("w")
+                       or team.get("wins")
+                       or 0),
+
+            "drawn": int(team.get("d")
+                         or team.get("draws")
+                         or 0),
+
+            "lost": int(team.get("l")
+                        or team.get("losses")
+                        or 0),
+
+            "gf": int(team.get("gf")
+                      or team.get("goals_for")
+                      or 0),
+
+            "ga": int(team.get("ga")
+                      or team.get("goals_against")
+                      or 0),
+
+            "gd": int(team.get("gd")
+                      or team.get("goal_difference")
+                      or (int(team.get("gf", 0)) - int(team.get("ga", 0)))),
+
+            "points": int(team.get("pts")
+                          or team.get("points")
+                          or 0)
+        }
+
+
     try:
-        response = requests.get(api_url, headers=headers, timeout=6)
+        response = requests.get(api_url, headers=headers, timeout=10)
+
+        st.write("🔎 API Status:", response.status_code)
+
         if response.status_code == 200:
-            groups_data = response.json()
+            data = response.json()
 
-            raw_groups_list = []
-            if isinstance(groups_data, list):
-                raw_groups_list = groups_data
-            elif isinstance(groups_data, dict):
-                if "data" in groups_data and isinstance(groups_data["data"], list):
-                    raw_groups_list = groups_data["data"]
-                elif "groups" in groups_data and isinstance(groups_data["groups"], list):
-                    raw_groups_list = groups_data["groups"]
+            # -----------------------------
+            # STEP 1: FIND GROUP LIST
+            # -----------------------------
+            groups = []
+
+            if isinstance(data, list):
+                groups = data
+
+            elif isinstance(data, dict):
+
+                # common patterns
+                if "data" in data:
+                    groups = data["data"]
+
+                elif "groups" in data:
+                    groups = data["groups"]
+
+                elif "response" in data:
+                    groups = data["response"]
+
                 else:
-                    raw_groups_list = [v for v in groups_data.values() if isinstance(v, dict)]
+                    # fallback: first list inside dict
+                    groups = [
+                        v for v in data.values()
+                        if isinstance(v, (list, dict))
+                    ]
 
+            # -----------------------------
+            # STEP 2: EXTRACT TEAMS
+            # -----------------------------
             all_teams = []
-            for group in raw_groups_list:
+
+            for group in groups:
+
                 if isinstance(group, dict):
-                    group_letter = group.get("group") or group.get("name", "")
-                    for team in group.get("teams", []):
+
+                    group_name = group.get("group") or group.get("name") or "?"
+
+                    teams = group.get("teams") or group.get("team") or []
+
+                    if isinstance(teams, dict):
+                        teams = teams.values()
+
+                    for team in teams:
                         if isinstance(team, dict):
-                            # Adaptive name resolver step
-                            team_name = team.get("name_en") or team.get("name") or f"Team ID: {team.get('name', '')}"
+                            t = normalize_team(team)
+                            t["group"] = group_name
+                            all_teams.append(t)
 
-                            # Match flag dynamically based on dictionary, default to football if missing
-                            team_flag = FLAG_MAP.get(team_name, "⚽")
-
-                            # --- EXACT API SCHEMA DICTIONARY CORRECTION ---
-                            all_teams.append({
-                                "name": team_name,
-                                "group": group_letter,
-                                "played": int(team.get("mp", team.get("played", 0))),
-                                "won": int(team.get("w", team.get("won", 0))),
-                                "drawn": int(team.get("d", team.get("drawn", 0))),
-                                "lost": int(team.get("l", team.get("lost", 0))),
-                                "gf": int(team.get("gf", 0)),
-                                "ga": int(team.get("ga", 0)),
-                                "gd": int(team.get("gd", team.get("goal_difference", 0))),
-                                "points": int(team.get("pts", team.get("points", 0))),
-                                "flag": team_flag
-                            })
+            # -----------------------------
+            # STEP 3: APPLY DATA
+            # -----------------------------
             if all_teams:
                 display_df = pd.DataFrame(all_teams)
                 is_live = True
+                st.success(f"✅ Live API loaded: {len(all_teams)} teams found")
+            else:
+                st.warning("⚠️ API responded but no teams were parsed. Structure mismatch.")
+
         else:
-            st.error(f"⚠️ API responded with bad HTTP code: {response.status_code}")
+            st.error(f"⚠️ API error HTTP {response.status_code}")
+
     except Exception as api_error:
-        st.error("⚠️ The live API connection failed to load successfully.")
-        st.info(f"Detailed Troubleshooting Context: {api_error}")
+        st.error("⚠️ Live API connection failed")
+        st.exception(api_error)
 
     # Top KPI Cards
     kpi1, kpi2, kpi3, kpi4 = st.columns(4)
