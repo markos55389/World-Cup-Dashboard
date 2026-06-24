@@ -132,9 +132,6 @@ elif st.session_state.current_page == "stats":
         "User-Agent": "Mozilla/5.0"
     }
 
-    standings = standings.sort_values("points", ascending=False).reset_index(drop=True)
-    standings["Pos"] = standings.index + 1
-
     def normalize_team(team):
         """Safely extract team fields across different API schemas"""
         return {
@@ -247,6 +244,8 @@ elif st.session_state.current_page == "stats":
             if all_teams:
                 display_df = pd.DataFrame(all_teams)
                 is_live = True
+                if "flag" not in display_df.columns:
+                    display_df["flag"] = display_df["name"].map(FLAG_MAP).fillna("")
                 st.success(f"✅ Live API loaded: {len(all_teams)} teams found")
             else:
                 st.warning("⚠️ API responded but no teams were parsed. Structure mismatch.")
@@ -272,9 +271,14 @@ elif st.session_state.current_page == "stats":
         st.subheader("📋 Group Stage Standings Table (Offline Backup)")
 
     # Sort standard format ranking criteria
-    standings = display_df.sort_values(by=["points", "gd", "gf"], ascending=[False, False, False]).reset_index(
-        drop=True)
-    standings.insert(0, "Pos", range(1, len(standings) + 1))
+    # Sort standard format ranking criteria
+    standings = display_df.sort_values(
+        by=["points", "gd", "gf"],
+        ascending=[False, False, False]
+    ).reset_index(drop=True)
+
+    # ADD THIS (better + safer than insert)
+    standings["Pos"] = standings.index + 1
 
     st.dataframe(
         standings[["Pos", "flag", "name", "group", "played", "won", "drawn", "lost", "gf", "ga", "gd", "points"]],
