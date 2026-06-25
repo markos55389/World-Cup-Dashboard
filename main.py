@@ -330,13 +330,76 @@ elif st.session_state.current_page == "🔍Explorer":
 
 # --- PAGE 4: PLAYER STATS ---
 elif st.session_state.current_page == "player_stats":
-    st.subheader("⚽ Player Statistics")
-    player_data = {
-        "Player": ["Lionel Messi", "Kylian Mbappé", "Luka Modrić", "Neymar Jr"],
-        "Team": ["Argentina", "France", "Croatia", "Brazil"],
-        "Goals": [7, 8, 3, 2], "Assists": [3, 2, 1, 1]
+    st.subheader("⚽ Live Tournament Player Statistics")
+    st.caption("Real-time stats from the API-Football endpoint.")
+
+    # CHANGE THIS to your preferred host base URL:
+    # RapidAPI Host: "https://api-football-v1.p.rapidapi.com/v3"
+    # Direct API-Sports Host: "https://v3.football.api-sports.io"
+    BASE_URL = "https://v3.football.api-sports.io"
+
+    headers = {
+        "x-apisports-key": "YOUR_API_KEY_HERE",  # For direct api-sports
+        # If using RapidAPI, use these headers instead:
+        # "X-RapidAPI-Key": "YOUR_RAPIDAPI_KEY",
+        # "X-RapidAPI-Host": "api-football-v1.p.rapidapi.com"
     }
-    st.dataframe(pd.DataFrame(player_data), use_container_width=True, hide_index=True)
+
+    # Query params: World Cup League ID is typically 1
+    params = {"league": "1", "season": "2026"}
+
+    try:
+        # Fetch Top Scorers data
+        scorers_res = requests.get(f"{BASE_URL}/players/topscorers", headers=headers, params=params).json()
+        # Fetch Top Assists data
+        assists_res = requests.get(f"{BASE_URL}/players/topassists", headers=headers, params=params).json()
+
+        player_metrics = {}
+
+        # Parse Goals Scored
+        if "response" in scorers_res:
+            for item in scorers_res["response"]:
+                p_name = item["player"]["name"]
+                t_name = item["statistics"][0]["team"]["name"]
+                goals = item["statistics"][0]["goals"]["total"] or 0
+
+                player_metrics[p_name] = {
+                    "Player": p_name,
+                    "Team": t_name,
+                    "Goals Scored": goals,
+                    "Assists Made": 0
+                }
+
+        # Merge Assists Made
+        if "response" in assists_res:
+            for item in assists_res["response"]:
+                p_name = item["player"]["name"]
+                t_name = item["statistics"][0]["team"]["name"]
+                assists = item["statistics"][0]["goals"]["assists"] or 0
+
+                if p_name in player_metrics:
+                    player_metrics[p_name]["Assists Made"] = assists
+                else:
+                    player_metrics[p_name] = {
+                        "Player": p_name,
+                        "Team": t_name,
+                        "Goals Scored": 0,
+                        "Assists Made": assists
+                    }
+
+        # Convert to DataFrame and render
+        if player_metrics:
+            df_display = pd.DataFrame(player_metrics.values())
+            df_display = df_display.sort_values(by=["Goals Scored", "Assists Made"], ascending=False)
+            st.dataframe(df_display, use_container_width=True, hide_index=True)
+        else:
+            st.info("No stats returned from the API yet for this tournament window.")
+
+    except Exception as e:
+        st.error(f"Could not reach endpoint safely: {e}")
+
+    # FIXED: Extraneous 'player_data' rendering line removed from here!
+
     if st.button("⬅ Back to Home", key="back_home_from_players"):
         st.session_state.current_page = "home"
         st.rerun()
