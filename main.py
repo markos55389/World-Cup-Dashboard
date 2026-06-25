@@ -102,9 +102,6 @@ if st.session_state.current_page == "home":
 elif st.session_state.current_page == "stats":
     st.title("🏆 FIFA World Cup 2026 Standings")
 
-    st.json(requests.get("https://worldcup26.ir/get/teams").json())
-    st.json(requests.get("https://worldcup26.ir/get/groups").json())
-
     # Baseline fallback data definition
     display_df = st.session_state.teams_df.copy()
     is_live = False
@@ -130,34 +127,25 @@ elif st.session_state.current_page == "stats":
     }
 
     BASE = "https://worldcup26.ir/get"
+    headers = {"User-Agent": "Mozilla/5.0"}
 
 
-    @st.cache_data(ttl=3600)  # fetch once, reuse on every rerun
+    @st.cache_data(ttl=3600)
     def get_team_lookup():
-        data = requests.get(f"{BASE}/teams").json()
-        if isinstance(data, dict):
-            data = data.get("data") or data.get("teams") or []
+        data = requests.get(f"{BASE}/teams", headers=headers, timeout=6).json()
+        if isinstance(data, dict):  # unwrap if it's wrapped
+            data = data.get("data") or data.get("teams") or list(data.values())
         lookup = {}
         for t in data:
-            tid = t.get("_id") or t.get("id")
-            name = t.get("name") or t.get("country")
-            if tid:
-                lookup[str(tid)] = name
+            if isinstance(t, dict) and t.get("id") is not None:
+                lookup[str(t["id"]).strip()] = t.get("name_en") or t.get("name_fa")
         return lookup
 
 
     lookup = get_team_lookup()
 
-    standings = requests.get(f"{BASE}/groups").json()
-    if isinstance(standings, dict):
-        standings = standings.get("data") or standings.get("groups") or []
-
-    for row in standings:
-        team_ref = row.get("team") or row.get("team_id") or row.get("teamId")
-        if isinstance(team_ref, dict):
-            row["team_name"] = team_ref.get("name")
-        else:
-            row["team_name"] = lookup.get(str(team_ref), "Unknown")
+    # TEMP — tells us if the teams actually loaded:
+    #st.write("Teams loaded:", len(lookup), "| sample:", dict(list(lookup.items())[:3]))
 
     try:
         response = requests.get(api_url, headers=headers, timeout=6)
@@ -182,8 +170,9 @@ elif st.session_state.current_page == "stats":
                     for team in group.get("teams", []):
                         if isinstance(team, dict):
                             # Adaptive name resolver step
-                            team_name = team.get("name_en") or team.get("name") or row["team_name"]
-
+                            #team_name = team.get("name_en") or team.get("name") or row["team_name"]
+                            tid = str(team.get("team_id", "")).strip()
+                            team_name = lookup.get(tid, "Unknown")
                             # Match flag dynamically based on dictionary, default to football if missing
                             team_flag = FLAG_MAP.get(team_name, "⚽")
 
@@ -341,76 +330,13 @@ elif st.session_state.current_page == "🔍Explorer":
 
 # --- PAGE 4: PLAYER STATS ---
 elif st.session_state.current_page == "player_stats":
-    st.subheader("⚽ Live Tournament Player Statistics")
-    st.caption("Real-time stats from the API-Football endpoint.")
-
-    # CHANGE THIS to your preferred host base URL:
-    # RapidAPI Host: "https://api-football-v1.p.rapidapi.com/v3"
-    # Direct API-Sports Host: "https://v3.football.api-sports.io"
-    BASE_URL = "https://v3.football.api-sports.io"
-
-    headers = {
-        "x-apisports-key": "c4135b8921d0dc680b08338fc8a84bb9",  # For direct api-sports
-        # If using RapidAPI, use these headers instead:
-        # "X-RapidAPI-Key": "YOUR_RAPIDAPI_KEY",
-        # "X-RapidAPI-Host": "api-football-v1.p.rapidapi.com"
+    st.subheader("⚽ Player Statistics")
+    player_data = {
+        "Player": ["Lionel Messi", "Kylian Mbappé", "Luka Modrić", "Neymar Jr"],
+        "Team": ["Argentina", "France", "Croatia", "Brazil"],
+        "Goals": [7, 8, 3, 2], "Assists": [3, 2, 1, 1]
     }
-
-    # Query params: World Cup League ID is typically 1
-    params = {"league": "1", "season": "2026"}
-
-    try:
-        # Fetch Top Scorers data
-        scorers_res = requests.get(f"{BASE_URL}/players/topscorers", headers=headers, params=params).json()
-        # Fetch Top Assists data
-        assists_res = requests.get(f"{BASE_URL}/players/topassists", headers=headers, params=params).json()
-
-        player_metrics = {}
-
-        # Parse Goals Scored
-        if "response" in scorers_res:
-            for item in scorers_res["response"]:
-                p_name = item["player"]["name"]
-                t_name = item["statistics"][0]["team"]["name"]
-                goals = item["statistics"][0]["goals"]["total"] or 0
-
-                player_metrics[p_name] = {
-                    "Player": p_name,
-                    "Team": t_name,
-                    "Goals Scored": goals,
-                    "Assists Made": 0
-                }
-
-        # Merge Assists Made
-        if "response" in assists_res:
-            for item in assists_res["response"]:
-                p_name = item["player"]["name"]
-                t_name = item["statistics"][0]["team"]["name"]
-                assists = item["statistics"][0]["goals"]["assists"] or 0
-
-                if p_name in player_metrics:
-                    player_metrics[p_name]["Assists Made"] = assists
-                else:
-                    player_metrics[p_name] = {
-                        "Player": p_name,
-                        "Team": t_name,
-                        "Goals Scored": 0,
-                        "Assists Made": assists
-                    }
-
-        # Convert to DataFrame and render
-        if player_metrics:
-            df_display = pd.DataFrame(player_metrics.values())
-            df_display = df_display.sort_values(by=["Goals Scored", "Assists Made"], ascending=False)
-            st.dataframe(df_display, use_container_width=True, hide_index=True)
-        else:
-            st.info("No stats returned from the API yet for this tournament window.")
-
-    except Exception as e:
-        st.error(f"Could not reach endpoint safely: {e}")
-
-    # FIXED: Extraneous 'player_data' rendering line removed from here!
-
+    st.dataframe(pd.DataFrame(player_data), use_container_width=True, hide_index=True)
     if st.button("⬅ Back to Home", key="back_home_from_players"):
         st.session_state.current_page = "home"
         st.rerun()
